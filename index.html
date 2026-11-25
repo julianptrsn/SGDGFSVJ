@@ -1245,23 +1245,25 @@ if(startView!=='taktik')setView(startView);
   /* Support-Zähler: gemeinsamer Zähler für alle über abacus.jasoncameron.dev */
   const API='https://abacus.jasoncameron.dev', KEY='sgdgfsvj/stefan-bleib';
   const btn=document.getElementById('loveBtn'), num=document.getElementById('loveNum'), lbl=document.getElementById('loveLbl');
-  let server=null, pending=0, sending=false, mine=0, offline=false;
+  let server=null, pending=0, sending=false, mine=0, offline=false, fails=0, shown=0;
   const fmt=n=>n.toLocaleString('de-DE');
+  const nocache=()=>'?t='+Date.now();
   function show(){
     if(server===null){num.textContent=mine?fmt(mine):'–';lbl.textContent=offline?(mine?'Herzen von dir (Zähler gerade nicht erreichbar)':'Zähler gerade nicht erreichbar'):'Herzen für Stefan';return;}
-    num.textContent=fmt(server+pending);lbl.textContent=(server+pending)===1?'Herz für Stefan':'Herzen für Stefan';
+    shown=Math.max(shown,server+pending);   // Anzeige läuft nie rückwärts
+    num.textContent=fmt(shown);lbl.textContent=shown===1?'Herz für Stefan':'Herzen für Stefan';
   }
   function load(){
-    fetch(API+'/get/'+KEY,{cache:'no-store'}).then(r=>r.status===404?{value:0}:r.ok?r.json():Promise.reject())
-      .then(d=>{server=Number(d.value)||0;offline=false;show();}).catch(()=>{offline=true;show();});
+    fetch(API+'/get/'+KEY+nocache(),{cache:'no-store'}).then(r=>r.status===404?{value:0}:r.ok?r.json():Promise.reject())
+      .then(d=>{server=Math.max(server||0,Number(d.value)||0);offline=false;show();if(pending)flush();}).catch(()=>{offline=true;show();});
   }
   function flush(){
     if(sending||pending<=0)return;
     sending=true;
-    fetch(API+'/hit/'+KEY,{cache:'no-store'}).then(r=>r.ok?r.json():Promise.reject(r.status))
-      .then(d=>{pending--;server=Number(d.value)||0;offline=false;})
-      .catch(()=>{if(server===null){offline=true;pending=0;}else{pending=Math.max(0,pending-1);}})
-      .finally(()=>{sending=false;show();if(pending>0)setTimeout(flush,180);});
+    fetch(API+'/hit/'+KEY+nocache(),{cache:'no-store'}).then(r=>r.ok?r.json():Promise.reject(r.status))
+      .then(d=>{pending--;fails=0;server=Math.max(server||0,Number(d.value)||0);offline=false;})
+      .catch(()=>{fails++;if(fails>5){pending=0;fails=0;if(server===null)offline=true;}})  // Klick bleibt in der Warteschlange und wird erneut gesendet
+      .finally(()=>{sending=false;show();if(pending>0)setTimeout(flush,fails?Math.min(4000,600*fails):180);});
   }
   function hearts(){
     const r=btn.getBoundingClientRect(), cx=r.left+r.width/2, cy=r.top+r.height/2;
@@ -1281,7 +1283,7 @@ if(startView!=='taktik')setView(startView);
   btn.addEventListener('click',()=>{
     hearts();mine++;
     btn.classList.remove('pulse');void btn.offsetWidth;btn.classList.add('pulse');
-    if(!offline||server!==null){pending++;flush();}
+    pending++;flush();
     show();
   });
   load();
