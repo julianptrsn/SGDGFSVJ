@@ -1,0 +1,1253 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#C0111B">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Janneby">
+<title>Janneby Taktiktafel</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: Kabinen-Taktiktafel – Spielfeld links als Bühne, Erklärungen rechts; oben System-Umschalter */
+:root{
+  --bg:#F2F0EE; --surface:#FFFFFF; --ink:#161414; --muted:#615B58; --rule:#DCD7D3;
+  --accent:#B8121B; --accent-soft:#F7DFE0;
+  --bib:#C8141E; --keeper:#141414; --opp:#D3DADF;
+  --club-red:#C0111B; --club-black:#131212;
+  --pitch-a:#1E5A39; --pitch-b:#226341; --chalk:#E8F1EA;
+  --good:#1F7A45; --bad:#B3361F;
+  --f-display:'Barlow Condensed','Arial Narrow',Arial,sans-serif;
+  --f-body:'Barlow','Segoe UI',system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E0D0D; --surface:#1A1818; --ink:#F1EDEB; --muted:#A9A19D; --rule:#302C2B;
+  --accent:#F04B52; --accent-soft:#3B1517; --good:#5CC48A; --bad:#F07C62; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E0D0D; --surface:#1A1818; --ink:#F1EDEB; --muted:#A9A19D; --rule:#302C2B;
+  --accent:#F04B52; --accent-soft:#3B1517; --good:#5CC48A; --bad:#F07C62; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:1160px;margin:0 auto}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.05}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* Header */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:color-mix(in srgb,var(--bg) 92%,transparent);
+  backdrop-filter:blur(8px);border-bottom:1px solid var(--rule);margin:0 calc(-1 * max(16px,env(safe-area-inset-left,0px)))}
+.top-in{max-width:1160px;margin:0 auto;padding:10px max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px));
+  display:flex;flex-wrap:wrap;align-items:center;gap:10px 20px}
+.brand{display:flex;align-items:center;gap:10px;margin-right:auto}
+.crest{width:34px;height:auto;display:block}
+.brand small{display:block;font-size:12px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;line-height:1.1}
+.brand strong{font-family:var(--f-display);font-size:22px;font-weight:700;line-height:1}
+nav.links{display:flex;gap:16px;font-weight:600;font-size:15px}
+nav.links a{color:var(--muted);text-decoration:none}
+nav.links a:hover{color:var(--ink)}
+.seg{display:inline-flex;background:var(--surface);border:1px solid var(--rule);border-radius:999px;padding:3px}
+.seg button{border:0;background:none;padding:6px 14px;border-radius:999px;cursor:pointer;font-family:var(--f-display);
+  font-weight:700;font-size:18px;letter-spacing:.02em;color:var(--muted);font-variant-numeric:tabular-nums}
+.seg button[aria-pressed="true"]{background:var(--club-red);color:#fff}
+
+/* Vereins-Banner im Wappen-Split */
+.club{margin-top:22px;border-radius:18px;overflow:hidden;color:#fff;
+  background:linear-gradient(105deg,var(--club-red) 0 52%,var(--club-black) 52% 100%);
+  display:grid;grid-template-columns:auto minmax(0,1fr);gap:24px;align-items:center;padding:26px 30px}
+.club img{width:clamp(84px,16vw,138px);height:auto;filter:drop-shadow(0 6px 14px rgba(0,0,0,.35))}
+.club small{display:block;font-size:12.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;opacity:.85}
+.club h1{font-size:clamp(38px,7vw,72px);font-weight:800;text-transform:uppercase;letter-spacing:.01em;margin:4px 0 8px}
+.club p{margin:0;max-width:52ch;font-size:16.5px;opacity:.92}
+@media (max-width:560px){.club{grid-template-columns:minmax(0,1fr);padding:22px;background:linear-gradient(160deg,var(--club-red) 0 55%,var(--club-black) 55% 100%)}}
+.sec-head h2{position:relative;padding-bottom:10px}
+.sec-head h2::after{content:"";position:absolute;left:0;bottom:0;width:56px;height:4px;background:linear-gradient(90deg,var(--club-red) 50%,var(--club-black) 50%)}
+/* Bereichs-Reiter */
+.views{display:flex;flex-wrap:wrap;align-items:center;gap:4px}
+.views nav.links{display:flex;gap:14px;font-size:14.5px;padding:0 14px 0 4px;margin-right:6px;border-right:1px solid var(--rule)}
+.views nav.links[hidden]{display:none}
+.views nav.links a{font-weight:600}
+.views button{border:0;background:none;cursor:pointer;font-family:var(--f-display);font-weight:800;font-size:19px;letter-spacing:.03em;text-transform:uppercase;
+  padding:6px 12px;border-radius:8px;color:var(--muted);border-bottom:3px solid transparent;border-radius:6px 6px 0 0}
+.views button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--club-red)}
+.tools{display:flex;flex-wrap:wrap;align-items:center;gap:10px 20px}
+.tools[hidden]{display:none!important}
+/* Dehnen */
+.flow{list-style:none;margin:22px 0 0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;counter-reset:f}
+.flow li{background:var(--surface);border:1px solid var(--rule);border-radius:12px;padding:14px 16px 14px 56px;position:relative;counter-increment:f}
+.flow li::before{content:counter(f);position:absolute;left:14px;top:14px;width:30px;height:30px;border-radius:50%;background:var(--club-black);color:#fff;
+  display:grid;place-items:center;font-family:var(--f-display);font-weight:800;font-size:17px}
+.flow li:nth-child(2)::before{background:var(--surface);color:var(--ink);box-shadow:inset 0 0 0 2px var(--ink)}
+.flow b{display:block;font-family:var(--f-display);font-size:21px;font-weight:800;line-height:1.1}
+.flow span{font-size:14.5px;color:var(--muted)}
+@media (max-width:700px){.flow{grid-template-columns:minmax(0,1fr)}}
+.ex-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+@media (max-width:900px){.ex-grid{grid-template-columns:minmax(0,1fr)}}
+.ex{background:var(--surface);border:1px solid var(--rule);border-radius:14px;padding:16px;display:grid;gap:12px;min-width:0}
+.ex-head{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:start}
+.ex-n{width:40px;height:40px;border-radius:50%;background:var(--club-red);color:#fff;display:grid;place-items:center;font-family:var(--f-display);font-weight:800;font-size:20px}
+.ex-n.mob{background:var(--club-black)}
+.ex h3{font-size:25px;font-weight:800}
+.ex .hint{margin:3px 0 0;font-size:14.5px;color:var(--muted)}
+.reps{white-space:nowrap;font-family:var(--f-display);font-weight:800;font-size:17px;letter-spacing:.02em;padding:4px 10px;border-radius:999px;
+  background:var(--accent-soft);color:var(--accent);font-variant-numeric:tabular-nums}
+.photos{display:flex;gap:6px;align-items:flex-start}
+.photos figure{margin:0;min-width:0}
+.photos img{display:block;width:100%;height:auto;border-radius:8px;background:var(--rule)}
+.photos figcaption{font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:5px;text-align:center}
+.solo{margin-top:40px;border-radius:14px;padding:22px 24px;border:2px dashed var(--rule);display:grid;gap:4px}
+.solo h2{font-size:clamp(28px,4vw,38px);font-weight:800}
+.solo p{margin:0;color:var(--muted);max-width:60ch}
+@media (max-width:560px){.ex-head{grid-template-columns:auto minmax(0,1fr)}.reps{grid-column:2;justify-self:start}}
+/* Spielerplus */
+.heart{color:#fff}
+.week{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.week li{background:var(--surface);border:1px solid var(--rule);border-radius:12px;padding:12px;min-height:118px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.week b{font-family:var(--f-display);font-size:26px;font-weight:800;line-height:1}
+.week span{font-size:14px;line-height:1.3}
+.week em{font-style:normal;font-size:12.5px;font-weight:700;color:var(--accent);margin-top:auto}
+.week li.dim{background:none;border-style:dashed}
+.week li.dim b{color:var(--muted);opacity:.6}
+.week li.hot{background:var(--club-red);border-color:var(--club-red);color:#fff;grid-column:span 1}
+.week li.hot em{color:#fff;opacity:.9}
+.week li.train{border-color:var(--ink);box-shadow:inset 0 3px 0 var(--club-red)}
+.week em.time{font-family:var(--f-display);font-size:19px;font-weight:800;color:var(--ink)}
+@media (max-width:760px){.week{grid-template-columns:repeat(2,minmax(0,1fr))}.week li.dim{display:none}.week li{min-height:0}}
+.rules{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:860px){.rules{grid-template-columns:minmax(0,1fr)}}
+.rule{background:var(--surface);border:1px solid var(--rule);border-radius:14px;padding:18px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px;align-items:start}
+.rule h3{font-size:23px;font-weight:800;margin-bottom:4px}
+.rule p{margin:0;color:var(--muted);font-size:15px}
+.call{background:var(--club-black);color:#fff;border-radius:18px;padding:26px 28px;display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:24px;align-items:center}
+.call .eyebrow{color:#ff7d83}
+.call h2{font-size:clamp(28px,4.5vw,42px);font-weight:800;margin:2px 0 8px}
+.call p{margin:0;opacity:.85;max-width:52ch}
+.callorder{list-style:none;margin:0;padding:0;display:grid;gap:8px;counter-reset:c}
+.callorder li{counter-increment:c;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:12px;padding:12px 14px 12px 58px;position:relative}
+.callorder li::before{content:counter(c);position:absolute;left:14px;top:50%;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;
+  background:var(--club-red);display:grid;place-items:center;font-family:var(--f-display);font-weight:800;font-size:18px}
+.callorder li:nth-child(2)::before{background:transparent;box-shadow:inset 0 0 0 2px #fff}
+.callorder b{display:block;font-family:var(--f-display);font-size:26px;font-weight:800;line-height:1.1}
+.callorder span{font-size:14px;opacity:.8}
+@media (max-width:700px){.call{grid-template-columns:minmax(0,1fr);padding:22px}}
+/* Strafen */
+.fnotes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:22px}
+.fnote{background:var(--surface);border:1px solid var(--rule);border-radius:14px;padding:16px 18px;display:grid;gap:2px}
+.fnote b{font-family:var(--f-display);font-size:34px;font-weight:800;line-height:1;color:var(--accent);font-variant-numeric:tabular-nums}
+.fnote span{font-size:14.5px;color:var(--muted)}
+.fnote:not(.big) b{color:var(--ink);font-size:26px;padding-top:6px}
+@media (max-width:700px){.fnotes{grid-template-columns:minmax(0,1fr)}}
+.fgroup{padding-block:36px 0}
+.fgroup header{display:flex;gap:14px;align-items:center;margin-bottom:14px}
+.fico{width:44px;height:44px;flex:none;border-radius:50%;background:var(--club-black);color:#fff;display:grid;place-items:center;font-family:var(--f-display);font-weight:800;font-size:22px}
+.fgroup h2{font-size:clamp(28px,4.5vw,38px);font-weight:800}
+.fgroup header p{margin:2px 0 0;color:var(--muted)}
+.fines{list-style:none;margin:0;padding:0;border-top:2px solid var(--ink)}
+.fines li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center;padding:14px 4px;border-bottom:1px solid var(--rule)}
+.f-what b{display:block;font-size:17px;font-weight:600;line-height:1.3}
+.f-what span{display:block;font-size:14.5px;color:var(--muted);margin-top:2px}
+.f-price{text-align:right;font-family:var(--f-display);font-weight:800;font-size:28px;line-height:1;color:var(--accent);font-variant-numeric:tabular-nums;white-space:nowrap}
+.f-price small{display:block;font-family:var(--f-body);font-size:12.5px;font-weight:700;color:var(--ink);margin-top:4px;white-space:normal;max-width:150px;margin-left:auto}
+@media (max-width:520px){.fines li{grid-template-columns:minmax(0,1fr)}.f-price{text-align:left}.f-price small{margin-left:0}}
+/* Popup */
+.bleib{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
+  background:rgba(10,9,9,.72);backdrop-filter:blur(4px);animation:bfade .25s ease-out}
+.bleib[hidden]{display:none!important}
+.bleib-card{position:relative;width:min(460px,100%);border-radius:22px;overflow:hidden;color:#fff;text-align:center;
+  background:linear-gradient(120deg,var(--club-red) 0 50%,var(--club-black) 50% 100%);padding:34px 26px 26px;
+  box-shadow:0 24px 60px rgba(0,0,0,.5);animation:bpop .45s cubic-bezier(.2,1.4,.4,1)}
+.bleib-card img{width:96px;height:auto;filter:drop-shadow(0 6px 14px rgba(0,0,0,.4))}
+.bleib-card small{display:block;margin-top:14px;font-size:12.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;opacity:.85}
+.bleib-card h2{font-family:var(--f-display);font-weight:800;text-transform:uppercase;font-size:clamp(52px,15vw,84px);line-height:.92;letter-spacing:.01em;margin:6px 0 20px;
+  text-shadow:0 3px 0 rgba(0,0,0,.25)}
+.bleib-card h2 span{display:block}
+.bleib-card .go{border:2px solid #fff;background:#fff;color:var(--club-black);border-radius:12px;padding:11px 22px;font-weight:700;font-size:16px;cursor:pointer}
+.bleib-card .go:hover{background:transparent;color:#fff}
+.bleib-x{position:absolute;top:10px;right:10px;width:40px;height:40px;border:0;border-radius:50%;background:rgba(255,255,255,.14);color:#fff;font-size:24px;line-height:1;cursor:pointer}
+@keyframes bfade{from{opacity:0}}
+@keyframes bpop{from{opacity:0;transform:scale(.85) rotate(-2deg)}}
+@media (prefers-reduced-motion:reduce){.bleib,.bleib-card{animation:none}}
+/* Sections */
+section{padding-block:44px 8px}
+.eyebrow{display:block;font-size:12.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+.sec-head{display:grid;gap:6px;margin-bottom:22px;max-width:65ch}
+.sec-head h2{font-size:clamp(34px,6vw,56px);font-weight:800}
+.sec-head p{margin:0;color:var(--muted);font-size:17px}
+.grid{display:grid;grid-template-columns:minmax(0,410px) minmax(0,1fr);gap:28px 40px;align-items:start}
+.grid > *{min-width:0}
+@media (max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}}
+
+/* Pitch */
+.pitch{background:var(--pitch-b);border-radius:14px;padding:6px;max-width:410px;width:100%;margin-inline:auto;box-shadow:0 1px 0 var(--rule)}
+.pitch svg{display:block;width:100%;height:auto}
+.sticky{position:sticky;top:82px}
+@media (max-width:860px){.sticky{position:static}}
+.st-a{fill:var(--pitch-a)} .st-b{fill:var(--pitch-b)}
+.lines *{fill:none;stroke:var(--chalk);stroke-width:.3;stroke-opacity:.75}
+.spot{fill:var(--chalk);opacity:.75}
+.dir{fill:var(--chalk);opacity:.5;font-family:var(--f-display);font-size:2.2px;font-weight:700;letter-spacing:.1px}
+.pl{cursor:pointer;transition:opacity .25s}
+.pl .body{fill:var(--bib);stroke:#fff;stroke-width:.38}
+.pl.gk .body{fill:var(--keeper);stroke:#fff}
+.pl .lbl{fill:#fff;font-family:var(--f-display);font-weight:800;pointer-events:none}
+.pl .ring{fill:none;stroke:#fff;stroke-width:.4;stroke-dasharray:1.3 .8;opacity:0;transform-box:fill-box;transform-origin:center}
+.pl.sel .ring{opacity:1;animation:spin 7s linear infinite}
+.pl:focus{outline:none} .pl:focus-visible .ring{opacity:1}
+.has-focus .pl:not(.sel){opacity:.42}
+@keyframes spin{to{transform:rotate(360deg)}}
+.op circle{fill:var(--opp);stroke:#1c2328;stroke-width:.3;stroke-opacity:.7}
+.op.gk circle{fill:#9AA6AE}
+.ball{fill:#fff;stroke:#111;stroke-width:.25}
+.chains line{stroke:#fff;stroke-opacity:.4;stroke-width:.45}
+.run{stroke:var(--chalk);stroke-width:.35;stroke-dasharray:1 .7;opacity:.9}
+.run.f{stroke:#fff;stroke-width:.6;stroke-dasharray:none}
+.pass{stroke:#fff;stroke-width:.45}
+.mk-run{fill:var(--chalk)} .mk-f{fill:#fff} .mk-pass{fill:#fff}
+@media (prefers-reduced-motion:reduce){.pl.sel .ring{animation:none}}
+
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13.5px;color:var(--muted);margin-top:10px;justify-content:center}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.dot{width:12px;height:12px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,.25)}
+.legend svg{width:26px;height:8px}
+.hint{text-align:center;font-size:14px;color:var(--muted);margin:10px 0 0}
+
+/* Grundordnung rechts */
+.shapes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:22px}
+.shapes.six{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (max-width:640px){.shapes,.shapes.six{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.shape{border:1px solid var(--rule);border-top:3px solid var(--rule);background:var(--surface);border-radius:4px 4px 10px 10px;
+  padding:9px 12px 11px;text-align:left;cursor:pointer;transition:border-color .2s,background .2s}
+.shape:hover{border-top-color:var(--muted)}
+.shape[aria-pressed="true"]{border-color:var(--club-red);border-top-color:var(--club-red);background:var(--accent-soft)}
+.shape small{display:block;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.shape b{font-family:var(--f-display);font-size:26px;font-weight:800;display:block;line-height:1.1;font-variant-numeric:tabular-nums}
+.shape span{font-size:14px;color:var(--muted);display:block;line-height:1.3}
+.principles{list-style:none;margin:0 0 26px;padding:0;display:grid;gap:10px}
+.principles li{padding-left:22px;position:relative;max-width:65ch}
+.principles li::before{content:"";position:absolute;left:2px;top:.5em;width:11px;height:11px;background:linear-gradient(90deg,var(--club-red) 50%,var(--club-black) 50%);clip-path:polygon(0 0,100% 0,100% 60%,50% 100%,0 60%)}
+.role{background:var(--surface);border:1px solid var(--rule);border-radius:14px;padding:20px}
+.role-head{display:flex;gap:14px;align-items:center;margin-bottom:16px}
+.disc{flex:none;width:52px;height:52px;border-radius:50%;background:var(--club-red);color:#fff;display:grid;place-items:center;
+  font-family:var(--f-display);font-weight:800;font-size:21px;border:2px solid var(--surface);box-shadow:0 0 0 1.5px var(--club-red)}
+.disc.gk{background:var(--club-black);box-shadow:0 0 0 1.5px var(--club-black)}
+.role-head h3{font-size:30px;font-weight:800}
+.role-head p{margin:2px 0 0;color:var(--muted)}
+.role-cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+@media (max-width:640px){.role-cols{grid-template-columns:minmax(0,1fr)}}
+.role-cols h4{margin:0 0 6px;font-size:12.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+.role-cols ul{margin:0;padding-left:18px;display:grid;gap:6px;font-size:15px}
+.link-btn{margin-top:18px;border:0;background:none;padding:0;color:var(--accent);font-weight:700;cursor:pointer;font-size:15px}
+.link-btn:hover{text-decoration:underline}
+
+/* Szenarien */
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px}
+.tab{border:1px solid var(--rule);background:var(--surface);border-radius:999px;padding:7px 15px;cursor:pointer;font-weight:600;font-size:15px}
+.tab[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.controls{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px;margin-top:12px}
+.cbtn{border:1px solid var(--rule);background:var(--surface);border-radius:10px;height:42px;min-width:42px;padding:0 12px;cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;font-weight:600}
+.cbtn.play{background:var(--club-red);border-color:var(--club-red);color:#fff;min-width:110px;font-weight:700}
+.cbtn svg{width:16px;height:16px;fill:currentColor}
+.opts{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:10px;font-size:14px;color:var(--muted)}
+.opts label{display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.opts select{font:inherit;border:1px solid var(--rule);border-radius:8px;background:var(--surface);color:var(--ink);padding:3px 6px}
+
+.phase-now{background:var(--surface);border:1px solid var(--rule);border-radius:14px;padding:18px 20px;margin-bottom:16px}
+.phase-now .count{font-size:12.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);font-variant-numeric:tabular-nums}
+.phase-now h3{font-size:28px;font-weight:800;margin:4px 0 6px}
+.phase-now p{margin:0;max-width:65ch}
+.intro{color:var(--muted);margin:0 0 14px;max-width:65ch}
+.phases{list-style:none;margin:0 0 26px;padding:0;display:grid;gap:4px}
+.phases button{width:100%;text-align:left;border:0;background:none;padding:7px 10px;border-radius:8px;cursor:pointer;display:flex;gap:10px;align-items:baseline}
+.phases button:hover{background:var(--surface)}
+.phases .n{font-family:var(--f-display);font-weight:800;font-size:18px;color:var(--muted);width:18px;font-variant-numeric:tabular-nums}
+.phases button[aria-current="step"]{background:var(--accent-soft)}
+.phases button[aria-current="step"] .n{color:var(--accent)}
+.who h3{font-size:24px;font-weight:800;margin-bottom:4px}
+.who > p{margin:0 0 12px;color:var(--muted);font-size:15px}
+.tasks{list-style:none;margin:0;padding:0;border-top:1px solid var(--rule)}
+.tasks li{border-bottom:1px solid var(--rule)}
+.tasks button{width:100%;text-align:left;border:0;background:none;cursor:pointer;padding:10px 6px;display:grid;
+  grid-template-columns:38px minmax(0,1fr);gap:12px;align-items:start}
+.tasks .disc{width:34px;height:34px;font-size:14px;border-width:1.5px}
+.tasks b{display:block;font-size:15px}
+.tasks span.t{font-size:15px;color:var(--muted)}
+.tasks button[aria-pressed="true"]{background:var(--accent-soft)}
+.tasks button[aria-pressed="true"] span.t{color:var(--ink)}
+
+/* Quiz */
+.quiz{display:grid;gap:14px;max-width:780px}
+.q{background:var(--surface);border:1px solid var(--rule);border-radius:14px;padding:18px 20px}
+.q h3{font-family:var(--f-body);font-size:17px;font-weight:700;line-height:1.35;margin-bottom:12px}
+.q .tag{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:4px}
+.opts-q{display:grid;gap:8px}
+.opt{border:1px solid var(--rule);background:var(--bg);border-radius:10px;padding:9px 12px;text-align:left;cursor:pointer;font-size:15px}
+.opt:hover:not(:disabled){border-color:var(--ink)}
+.opt:disabled{cursor:default}
+.opt.ok{border-color:var(--good);box-shadow:inset 3px 0 0 var(--good)}
+.opt.no{border-color:var(--bad);box-shadow:inset 3px 0 0 var(--bad)}
+.why{margin:10px 0 0;font-size:15px;color:var(--muted)}
+.score{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:6px}
+.score b{font-family:var(--f-display);font-size:30px;font-variant-numeric:tabular-nums}
+footer{padding-block:40px 30px;color:var(--muted);font-size:14px;border-top:1px solid var(--rule);margin-top:44px}
+</style>
+<style>
+.install{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--club-black);color:#fff;
+  padding:12px max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
+  display:flex;gap:12px;align-items:center;box-shadow:0 -4px 20px rgba(0,0,0,.25)}
+.install img{width:36px;height:36px;border-radius:8px}
+.install p{margin:0;font-size:14.5px;line-height:1.35;flex:1;min-width:0}
+.install b{display:block;font-family:var(--f-display);font-size:18px}
+.install button{border:0;border-radius:10px;padding:9px 14px;font-weight:700;cursor:pointer;background:var(--club-red);color:#fff}
+.install .x{background:transparent;padding:6px 8px;font-size:20px;line-height:1}
+</style>
+</head>
+<body>
+
+
+<header class="top">
+  <div class="top-in">
+    <div class="brand">
+      <img class="crest" src="logo.png" alt="Wappen SG DGF Janneby">
+      <div><small>SG DGF Janneby</small><strong>Taktiktafel</strong></div>
+    </div>
+    <div class="views" role="tablist" aria-label="Bereich wählen">
+      <button type="button" role="tab" id="vt-taktik" data-view="taktik" aria-selected="true">Taktik</button>
+      <nav class="links" id="taktikNav" aria-label="Taktik-Bereiche">
+        <a href="#grundordnung">Grundordnung</a>
+        <a href="#situationen">Spielsituationen</a>
+        <a href="#quiz">Quiz</a>
+      </nav>
+      <button type="button" role="tab" id="vt-dehnen" data-view="dehnen" aria-selected="false">Dehnen</button>
+      <button type="button" role="tab" id="vt-spielerplus" data-view="spielerplus" aria-selected="false">Spielerplus</button>
+      <button type="button" role="tab" id="vt-strafen" data-view="strafen" aria-selected="false">Strafen</button>
+    </div>
+    <div class="tools" id="taktikTools">
+    <div class="seg" role="group" aria-label="System wählen">
+      <button type="button" id="sys-4231" data-sys="4231" aria-pressed="true">4-2-3-1</button>
+      <button type="button" id="sys-352" data-sys="352" aria-pressed="false">3-5-2</button>
+    </div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+ <div id="view-taktik">
+  <div class="club">
+    <img src="logo.png" alt="Wappen SG DGF Janneby">
+    <div>
+      <small>SG DGF Janneby</small>
+      <h1>Unsere Spielidee</h1>
+      <p>Zwei Systeme, eine Idee: 4-2-3-1 und 3-5-2. Für jede Position die Aufgaben und animierte Spielsituationen, damit jeder weiß, wo er hingehört.</p>
+    </div>
+  </div>
+  <section id="grundordnung">
+    <div class="sec-head">
+      <span class="eyebrow">Grundordnung</span>
+      <h2 id="sysTitle">4-2-3-1</h2>
+      <p id="sysTag"></p>
+    </div>
+    <div class="grid">
+      <div class="sticky">
+        <div class="pitch"><svg id="heroSvg" aria-label="Grundordnung auf dem Spielfeld"></svg></div>
+        <p class="hint">Tippe auf einen Spieler, um seine Aufgaben zu sehen.</p>
+      </div>
+      <div>
+        <div class="shapes" id="shapes"></div>
+        <ul class="principles" id="principles"></ul>
+        <article class="role" id="role" aria-live="polite"></article>
+      </div>
+    </div>
+  </section>
+
+  <section id="situationen">
+    <div class="sec-head">
+      <span class="eyebrow">Spielsituationen</span>
+      <h2>Wer macht was, wann?</h2>
+      <p>Jede Situation läuft in Phasen ab. Die Pfeile zeigen die nächsten Laufwege und Pässe. Wähle eine Position, um nur ihren Weg zu verfolgen.</p>
+    </div>
+    <div class="tabs" id="tabs" role="tablist" aria-label="Spielsituation wählen"></div>
+    <div class="grid">
+      <div class="sticky">
+        <div class="pitch"><svg id="animSvg" aria-label="Animierte Spielsituation"></svg></div>
+        <div class="controls">
+          <button class="cbtn" id="btnRestart" type="button" aria-label="Von vorne"><svg viewBox="0 0 16 16"><path d="M2 2h2v12H2zM14 2v12L5 8z"/></svg></button>
+          <button class="cbtn" id="btnPrev" type="button" aria-label="Phase zurück"><svg viewBox="0 0 16 16"><path d="M11 2v12L3 8z"/></svg></button>
+          <button class="cbtn play" id="btnPlay" type="button"><svg viewBox="0 0 16 16"><path d="M4 2l10 6-10 6z"/></svg><span>Abspielen</span></button>
+          <button class="cbtn" id="btnNext" type="button" aria-label="Nächste Phase"><svg viewBox="0 0 16 16"><path d="M5 2v12l8-6z"/></svg></button>
+        </div>
+        <div class="opts">
+          <label><input type="checkbox" id="showRuns" checked> Laufwege zeigen</label>
+          <label>Tempo
+            <select id="speed"><option value="0.6">langsam</option><option value="1" selected>normal</option><option value="1.5">schnell</option></select>
+          </label>
+        </div>
+        <div class="legend">
+          <span><i class="dot" style="background:var(--bib)"></i>SG DGF Janneby</span>
+          <span><i class="dot" style="background:var(--opp)"></i>Gegner</span>
+          <span><svg viewBox="0 0 26 8"><line x1="1" y1="4" x2="25" y2="4" stroke="currentColor" stroke-width="1.6" stroke-dasharray="3 2"/></svg>Laufweg</span>
+          <span><svg viewBox="0 0 26 8"><line x1="1" y1="4" x2="25" y2="4" stroke="currentColor" stroke-width="1.8"/></svg>Pass</span>
+        </div>
+      </div>
+      <div>
+        <p class="intro" id="scenIntro"></p>
+        <div class="phase-now" aria-live="polite">
+          <span class="count" id="phCount">Phase 1 von 4</span>
+          <h3 id="phTitle"></h3>
+          <p id="phText"></p>
+        </div>
+        <ol class="phases" id="phases"></ol>
+        <div class="who">
+          <h3>Aufgaben in dieser Situation</h3>
+          <p>Tippe auf eine Position, um sie auf dem Feld hervorzuheben.</p>
+          <ul class="tasks" id="tasks"></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="quiz">
+    <div class="sec-head">
+      <span class="eyebrow">Quiz</span>
+      <h2>Weißt du, wo du stehst?</h2>
+      <p>Elf Fragen zu beiden Systemen. Die Auflösung kommt direkt nach deiner Antwort.</p>
+    </div>
+    <div class="quiz" id="quizBox"></div>
+    <div class="score"><b id="scoreVal">0 / 11</b><button class="cbtn" type="button" id="quizReset">Quiz neu starten</button></div>
+  </section>
+
+  </div>
+  <div id="view-dehnen" hidden>
+    <div class="club">
+      <img src="logo.png" alt="Wappen SG DGF Janneby">
+      <div>
+        <small>SG DGF Janneby · nach jedem Aufwärmen</small>
+        <h1>Dynamisches Dehnen</h1>
+        <p>Im Training und am Spieltag: Nach dem Aufwärmen machen wir diese Übungen gemeinsam, in dieser Reihenfolge.</p>
+      </div>
+    </div>
+    <ol class="flow">
+      <li><b>8 Dehnübungen</b><span>gemeinsam</span></li>
+      <li><b>2 individuelle Übungen</b><span>für deine Problemzonen, ca. 2 Minuten</span></li>
+      <li><b>4 Mobilisationsübungen</b><span>gemeinsam</span></li>
+    </ol>
+    <section id="dehnen-teil1">
+      <div class="sec-head"><span class="eyebrow">Teil 1 · gemeinsam</span><h2>Dehnübungen</h2><p>Jede Übung läuft von der Ausgangsposition über die Bewegung in die Endposition.</p></div>
+      <div class="ex-grid" id="exStretch"></div>
+    </section>
+    <aside class="solo">
+      <span class="eyebrow">Teil 2 · individuell</span>
+      <h2>Zwei Übungen für dich</h2>
+      <p>Jeder macht jetzt zwei eigene Übungen für seine Problemzonen. Dafür hast du etwa 2 Minuten.</p>
+    </aside>
+    <section id="dehnen-teil3">
+      <div class="sec-head"><span class="eyebrow">Teil 3 · gemeinsam</span><h2>Mobilisation</h2><p>Zum Abschluss vier Übungen für Becken, Hüfte und Wirbelsäule.</p></div>
+      <div class="ex-grid" id="exMobil"></div>
+    </section>
+  </div>
+  <div id="view-spielerplus" hidden>
+    <div class="club">
+      <img src="logo.png" alt="Wappen SG DGF Janneby">
+      <div>
+        <small>SG DGF Janneby · Termine &amp; Absagen</small>
+        <h1>Umgang mit Spielerplus</h1>
+        <p>Nutzt die App zuverlässig und weit im Voraus. Nur so können die Trainer Einheiten und Spiele vernünftig planen und vorbereiten. Da haben wir alle was von <span class="heart" aria-label="Herz">♥</span></p>
+      </div>
+    </div>
+    <section>
+      <div class="sec-head"><span class="eyebrow">Die Woche</span><h2>Sonntag ist Klicktag</h2><p>Wir haben zwei Termine pro Woche: Training am Mittwoch um 18:30 Uhr und ein Spiel, meistens am Freitag. Am Sonntag haben <b>alle</b> für <b>beide</b> Termine der Folgewoche geklickt, ab Montag planen die Trainer.</p></div>
+      <ol class="week" aria-label="Wochenablauf">
+        <li><b>Mo</b><span>Trainer planen die Woche</span></li>
+        <li class="dim"><b>Di</b></li><li class="train"><b>Mi</b><span>Training</span><em class="time">18:30 Uhr</em></li><li class="dim"><b>Do</b></li><li class="train"><b>Fr</b><span>Spiel</span><em class="time">meistens Freitag</em></li><li class="dim"><b>Sa</b></li>
+        <li class="hot"><b>So</b><span>Training und Spiel der Folgewoche klicken</span><em>19–20 Uhr: Push-Erinnerung</em></li>
+      </ol>
+    </section>
+    <section>
+      <div class="sec-head"><span class="eyebrow">Regeln</span><h2>So nutzen wir die App</h2></div>
+      <div class="rules">
+        <article class="rule"><span class="ex-n" aria-hidden="true">1</span><div><h3>Bis Sonntag für die ganze Folgewoche klicken</h3><p>Jeder sagt für jeden Termin der nächsten Woche zu oder ab. Die Trainer brauchen ab Montag ein vollständiges Bild.</p></div></article>
+        <article class="rule"><span class="ex-n" aria-hidden="true">2</span><div><h3>Am besten gleich den ganzen Monat</h3><p>Klickt im Optimalfall den ganzen Monat durch und blockt euch die Termine privat entsprechend.</p></div></article>
+        <article class="rule"><span class="ex-n" aria-hidden="true">3</span><div><h3>Push-Nachrichten aktivieren</h3><p>Mit aktivierten Push-Nachrichten bekommt ihr sonntags zwischen 19 und 20 Uhr eine Erinnerung, dass ihr klicken müsst.</p></div></article>
+        <article class="rule"><span class="ex-n" aria-hidden="true">4</span><div><h3>„?“ nur mit Entscheidungszeitpunkt</h3><p>Wer in Spielerplus das „?“ wählt, schreibt dazu, wann er die finale Entscheidung trifft. Zum Beispiel: „Entscheide mich bis Dienstagabend.“</p></div></article>
+      </div>
+    </section>
+    <section>
+      <div class="call">
+        <div>
+          <span class="eyebrow">Absage am Trainings- oder Spieltag</span>
+          <h2>Nicht mehr in der App, sondern anrufen</h2>
+          <p>Am Trainings- oder Spieltag selbst kannst du in der App nicht mehr absagen. Ruf stattdessen an:</p>
+        </div>
+        <ol class="callorder">
+          <li><b>Stefan</b><span>zuerst anrufen</span></li>
+          <li><b>Julian</b><span>wenn Stefan nicht erreichbar ist</span></li>
+        </ol>
+      </div>
+    </section>
+  </div>
+  <div id="view-strafen" hidden>
+    <div class="club">
+      <img src="logo.png" alt="Wappen SG DGF Janneby">
+      <div>
+        <small>SG DGF Janneby · Saison 2026/2027</small>
+        <h1>Strafenkatalog</h1>
+        <p>Alle Einnahmen fließen in die Mannschaftskasse, zum Beispiel für die Abschlussfahrt, den Grillabend und Teamevents.</p>
+      </div>
+    </div>
+    <div class="fnotes">
+      <div class="fnote big"><b>7 Tage</b><span>Strafen unaufgefordert innerhalb von 7 Tagen bezahlen</span></div>
+      <div class="fnote big"><b>+50 %</b><span>für Wiederholungstäter ab dem 3. Verstoß</span></div>
+      <div class="fnote"><b>Einzelfälle</b><span>entscheiden Trainer oder Mannschaftsrat</span></div>
+    </div>
+    <section class="fgroup"><header><span class="fico" aria-hidden="true">1</span><div><h2>Termine &amp; Pünktlichkeit</h2><p>Fehlen, Absagen und Zuspätkommen</p></div></header><ul class="fines"><li><div class="f-what"><b>Unentschuldigtes Fehlen beim Training</b><span>Bei kurzfristiger oder fehlender Absage über Spielerplus</span></div><div class="f-price">5 €</div></li><li><div class="f-what"><b>Unentschuldigtes Fehlen bei Spiel oder Treffpunkt</b><span>Gilt auch für Freundschaftsspiele</span></div><div class="f-price">25 €<small>+ 1× Dienst im Imbisswagen</small></div></li><li><div class="f-what"><b>Verspätete Zu- oder Absage in Spielerplus</b><span>Für die bessere Planung</span></div><div class="f-price">2 €</div></li><li><div class="f-what"><b>Unentschuldigt zu spät zum Training</b><span>Zur Startzeit umgezogen auf dem Platz sein</span></div><div class="f-price">3 €</div></li><li><div class="f-what"><b>Unentschuldigt zu spät zum Spieltreffpunkt</b><span>Bis 10 Minuten</span></div><div class="f-price">5 €<small>ab 10 Minuten 8 €</small></div></li></ul></section>
+    <section class="fgroup"><header><span class="fico" aria-hidden="true">2</span><div><h2>Ausrüstung &amp; Kabine</h2><p>Vergessenes und Teamaufgaben</p></div></header><ul class="fines"><li><div class="f-what"><b>Trikot oder Ausrüstung vergessen</b><span>Am Spieltag oder Training, z. B. Hose, Stutzen, Schuhe</span></div><div class="f-price">3 €</div></li><li><div class="f-what"><b>Ausrüstung in der Kabine vergessen</b><span>Nach Spieltag oder Training, z. B. Hose, Stutzen, Schuhe</span></div><div class="f-price">1 €<small>pro Teil</small></div></li><li><div class="f-what"><b>Handy klingelt in Kabine oder Besprechung</b><span>Konzentration auf Fußball</span></div><div class="f-price">3 €</div></li><li><div class="f-what"><b>Nicht am Kabinendienst beteiligt</b><span>Sauberkeit ist Teamsache</span></div><div class="f-price">3 €</div></li></ul></section>
+    <section class="fgroup"><header><span class="fico" aria-hidden="true">3</span><div><h2>Verhalten &amp; Karten</h2><p>Auf dem Platz und daneben</p></div></header><ul class="fines"><li><div class="f-what"><b>Unsportliches Verhalten gegenüber Mitspielern</b><span>z. B. Beleidigung</span></div><div class="f-price">5 €</div></li><li><div class="f-what"><b>Unsportliches Verhalten gegenüber Schiedsrichter oder Gegner</b><span>Je nach Schwere</span></div><div class="f-price">5–15 €</div></li><li><div class="f-what"><b>Gelbe Karte wegen Meckern, Ballwegschlagen o. Ä.</b><span>Nur disziplinarische Karten</span></div><div class="f-price">2 €</div></li><li><div class="f-what"><b>Gelb-Rote Karte</b><span>Disziplinmaßnahme</span></div><div class="f-price">5 €</div></li><li><div class="f-what"><b>Rote Karte (unsportlich oder grob unsportlich)</b><span>Einsatz nach Absprache mit dem Verein</span></div><div class="f-price">20 €<small>+ 1× Dienst im Imbisswagen</small></div></li></ul></section>
+  </div>
+  <footer>SG DGF Janneby · Taktiktafel für 4-2-3-1 und 3-5-2. Angriffsrichtung auf allen Spielfeldern: nach oben.</footer>
+</main>
+
+<script>
+(function(){
+const H=105, NS='http://www.w3.org/2000/svg';
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- Daten ---------- */
+const SYS={
+'4231':{
+  title:'4-2-3-1',
+  tag:'Doppelsechs als Fundament, drei Offensive hinter einer Spitze.',
+  shapes:[
+    {lab:'Grundordnung',f:'4-2-3-1',sub:'Ausgangsstellung'},
+    {lab:'Mit Ball',f:'2-4-4',sub:'AV hoch und breit',chains:[['LIV','RIV'],['LV','S6','A6','RV'],['LA','ZM','RA']],
+     pos:{TW:[34,18],LIV:[15,32],RIV:[53,32],LV:[5,52],S6:[29,44],A6:[40,48],RV:[63,52],LA:[18,76],ZM:[42,70],RA:[51,78],ST:[33,84]}},
+    {lab:'Gegen den Ball',f:'4-4-1-1',sub:'10 schiebt neben den ST',chains:[['LV','LIV','RIV','RV'],['LA','S6','A6','RA'],['ZM','ST']],
+     pos:{TW:[34,6],LV:[12,28],LIV:[27,26],RIV:[41,26],RV:[56,28],LA:[12,42],S6:[27,40],A6:[41,40],RA:[56,42],ZM:[28,55],ST:[40,57]}},
+    {lab:'Hohes Pressing',f:'4-4-2',sub:'Flügel lauern auf den AV',chains:[['LV','LIV','RIV','RV'],['LA','S6','A6','RA'],['ST','ZM']],
+     pos:{TW:[34,28],LV:[8,56],LIV:[26,50],RIV:[42,50],RV:[60,56],LA:[14,76],S6:[28,68],A6:[40,68],RA:[54,76],ST:[29,88],ZM:[40,86]}}],
+  principles:[
+    'Die Doppelsechs trennt sich nie: höchstens 10–12 Meter Abstand, einer bleibt immer hinter dem Ball.',
+    'Mit Ball geben die Außenverteidiger die Breite, die Flügelspieler ziehen in die Halbräume und in die Tiefe.',
+    'Gegen den Ball verteidigen wir im 4-4-1-1. Abwehr und Mittelfeld bleiben kompakt, die ballferne Seite rückt ein.'],
+  order:['TW','LV','LIV','RIV','RV','S6','A6','LA','ZM','RA','ST'],
+  chains:[['LV','LIV','RIV','RV'],['S6','A6'],['LA','ZM','RA']],
+  base:{TW:[34,5],LV:[9,30],LIV:[25,24],RIV:[43,24],RV:[59,30],S6:[28,40],A6:[40,42],LA:[11,56],ZM:[34,57],RA:[57,56],ST:[34,70]},
+  pos:{
+    TW:{label:'TW',name:'Torwart',desc:'Letzter Verteidiger und erster Aufbauspieler.',
+      mit:['Spielt flach auf den freien Innenverteidiger','Unter Druck lang auf den Stürmer, nie quer vor dem eigenen Tor','Bleibt seitlich versetzt anspielbar'],
+      gegen:['Steht hoch hinter der Kette und läuft Steilpässe ab','Coacht die Abwehr laut und früh'],
+      um:['Ballgewinn: schnell abwerfen auf den freien Flügel','Ballverlust: Raum hinter der Kette absichern']},
+    LIV:{label:'LIV',name:'Linker Innenverteidiger',desc:'Bildet mit dem RIV das Zentrum der Viererkette.',
+      mit:['Fächert im Aufbau an die linke Strafraumecke','Dribbelt in den freien Raum an, bis ein Gegner rausrückt','Erster Blick vertikal: 10 oder Stürmer'],
+      gegen:['Hält die Linie mit dem Partner, Abstand höchstens 10 Meter','Rückt ballnah raus, ballfern ein'],
+      um:['Ballgewinn: erster Pass nach vorne, nicht quer','Ballverlust: Restverteidigung, nie beide IV gleichzeitig raus']},
+    RIV:{label:'RIV',name:'Rechter Innenverteidiger',desc:'Bildet mit dem LIV das Zentrum der Viererkette.',
+      mit:['Fächert im Aufbau an die rechte Strafraumecke','Dribbelt in den freien Raum an, bis ein Gegner rausrückt','Erster Blick vertikal: 10 oder Stürmer'],
+      gegen:['Hält die Linie mit dem Partner, Abstand höchstens 10 Meter','Rückt ballnah raus, ballfern ein'],
+      um:['Ballgewinn: erster Pass nach vorne, nicht quer','Ballverlust: Restverteidigung, nie beide IV gleichzeitig raus']},
+    LV:{label:'LV',name:'Linker Außenverteidiger',desc:'Gibt im Aufbau die Breite auf links.',
+      mit:['Hoch und breit an der Seitenlinie','Hinterläuft, wenn der LA nach innen zieht','Ballfern leicht einrücken'],
+      gegen:['Stellt den Flügelspieler zur Linie, nicht nach innen','Ballfern einrücken bis zum Strafraumeck'],
+      um:['Ballgewinn: sofort Breite anbieten','Ballverlust: der ballferne AV bleibt tief']},
+    RV:{label:'RV',name:'Rechter Außenverteidiger',desc:'Gibt im Aufbau die Breite auf rechts.',
+      mit:['Hoch und breit an der Seitenlinie','Hinterläuft, wenn der RA nach innen zieht','Ballfern leicht einrücken'],
+      gegen:['Stellt den Flügelspieler zur Linie, nicht nach innen','Springt im Pressing auf den gegnerischen Flügel'],
+      um:['Ballgewinn: sofort Breite anbieten','Ballverlust: der ballferne AV bleibt tief']},
+    S6:{label:'6',name:'Anker-Sechser',desc:'Linker Teil der Doppelsechs. Bleibt immer hinter dem Ball.',
+      mit:['Zentrale Anspielstation vor den Innenverteidigern','Verlagert das Spiel, wenn eine Seite zu ist','Verlässt die Mitte nie'],
+      gegen:['Schließt den Raum vor der Abwehr','Springt auf Querpässe ins Zentrum'],
+      um:['Ballgewinn: erster Pass vertikal','Ballverlust: bleibt hinter dem Ball und sichert ab']},
+    A6:{label:'8',name:'Achter-Sechser',desc:'Rechter Teil der Doppelsechs. Schiebt mit nach vorne.',
+      mit:['Pendelt in den ballnahen Halbraum','Schiebt in den Rückraum vor dem Strafraum'],
+      gegen:['Bleibt auf einer Linie mit dem Anker-Sechser','Rückt im Pressing auf den gegnerischen Achter'],
+      um:['Ballgewinn: läuft mit nach vorne','Ballverlust: einer der drei Nächsten im Gegenpressing']},
+    LA:{label:'LA',name:'Linker Flügelspieler',desc:'Erst Breite, dann Halbraum und Tiefe.',
+      mit:['Hält die Breite und zieht die Kette auseinander','Startet diagonal in den Rücken der Abwehr','Bei Flanken von rechts: zweiter Pfosten'],
+      gegen:['Steht eingerückt auf Höhe der Sechser','Doppelt mit dem LV am Flügel'],
+      um:['Ballgewinn: sofort in die Tiefe starten','Ballverlust: zurück auf die Mittelfeldlinie']},
+    ZM:{label:'10',name:'Zehner',desc:'Der Spieler zwischen den Linien.',
+      mit:['Lauert im Halbraum zwischen Mittelfeld und Abwehr','Nimmt offen an und dreht auf','Bei Flanken: Rückraum'],
+      gegen:['Deckt den gegnerischen Sechser','Schiebt neben den Stürmer (4-4-1-1)'],
+      um:['Ballgewinn: Anspielstation für den ersten Pass','Ballverlust: presst sofort nach']},
+    RA:{label:'RA',name:'Rechter Flügelspieler',desc:'Erst Breite, dann Halbraum und Tiefe.',
+      mit:['Hält die Breite und zieht die Kette auseinander','Dribbelt nach innen, damit der RV hinterlaufen kann','Bei Flanken von links: zweiter Pfosten'],
+      gegen:['Steht eingerückt auf Höhe der Sechser','Lauert im Pressing auf den Pass zum Außenverteidiger'],
+      um:['Ballgewinn: sofort in die Tiefe starten','Ballverlust: zurück auf die Mittelfeldlinie']},
+    ST:{label:'ST',name:'Stürmer',desc:'Bindet die Abwehr und läuft das Pressing an.',
+      mit:['Hält die Innenverteidiger tief','Kommt kurz entgegen oder geht auf den ersten Pfosten'],
+      gegen:['Läuft im Bogen an und lenkt den Aufbau auf eine Seite','Schneidet den Rückpass zum Torwart ab'],
+      um:['Ballgewinn: sofort in die Tiefe','Ballverlust: erster Pressingspieler']}
+  },
+  scen:[
+  {tab:'Spielaufbau',intro:'Wir bauen gegen zwei pressende Stürmer flach von hinten auf und spielen uns bis zur 10 durch.',
+   frames:[
+    {t:'Abstoß: Torwart hat den Ball',d:'Die Innenverteidiger fächern bis an die Strafraumecken auf, die Außenverteidiger schieben hoch und breit. Der Anker-Sechser bietet sich zentral vor dem Strafraum an.',
+     ball:'TW',opp:'def',us:{TW:[34,5],LIV:[19,13],RIV:[49,13],LV:[5,32],RV:[63,32],S6:[34,24],A6:[40,36],LA:[8,56],ZM:[32,50],RA:[60,56],ST:[34,68]}},
+    {t:'Pass auf den rechten IV',d:'Sobald der Ball rollt, rückt die ballnahe Seite nach: RV hoch an die Linie, der Achter-Sechser in den Halbraum, die 10 in die Lücke zwischen den gegnerischen Linien.',
+     ball:'RIV',opp:'def',us:{RIV:[50,16],RV:[63,38],A6:[44,32],ZM:[42,46],RA:[61,58],TW:[36,6],LV:[6,34],LIV:[20,15],S6:[36,26],LA:[9,58],ST:[36,69]}},
+    {t:'Andribbeln, dann auf den RV',d:'Der IV dribbelt in den freien Raum, bis ein Gegner rausrückt. Erst dann kommt der Pass. Der RV hat Zeit, weil der RA die gegnerische Kette hochhält.',
+     ball:'RV',opp:'def',us:{RV:[63,40],RIV:[48,22],S6:[38,26],A6:[46,36],RA:[60,62],ZM:[44,50],ST:[38,70],LA:[14,58],LV:[8,36],LIV:[21,20],TW:[34,8]}},
+    {t:'Linienbrechender Pass auf die 10',d:'Die 10 nimmt offen an, Blick nach vorn. Der ST bindet die Innenverteidiger, der LA zieht diagonal in den Rücken, der RA geht in die Tiefe.',
+     ball:'ZM',opp:'def',us:{ZM:[44,52],ST:[36,74],LA:[20,64],RA:[60,68],A6:[46,40],LIV:[24,29],RIV:[46,31],TW:[34,12],S6:[34,35],LV:[10,46],RV:[62,46]}},
+    {t:'Steckpass in die Tiefe',d:'Drei Läufe gleichzeitig: LA diagonal, ST auf den ersten Pfosten, RA hält die Breite. Beide IV und der Anker-Sechser bleiben als Absicherung hinter dem Ball.',
+     ball:'LA',opp:'def',us:{LA:[24,82],ST:[34,86],RA:[56,80],ZM:[42,62],A6:[46,56],RV:[60,58],LIV:[26,41],RIV:[44,42],TW:[34,18],S6:[34,48],LV:[12,54]}}
+   ],
+   tasks:{TW:'Spielt flach auf den freien IV und bleibt danach für Rückpässe anspielbar, seitlich versetzt zum Ball.',
+     LIV:'Fächert an die linke Strafraumecke, sichert ab, wenn rechts aufgebaut wird, und rückt ballfern ein.',
+     RIV:'Breit stehen, offen annehmen, Raum andribbeln, bis ein Gegner rausrückt. Erst dann passen.',
+     LV:'Hoch und breit an der Linie, zieht den gegnerischen Flügel mit. Ballfern rückt er leicht ein.',
+     RV:'Bietet sich an der Linie an, nimmt mit dem ersten Kontakt nach vorne mit und sucht die 10.',
+     S6:'Zentral vor dem Strafraum: Anspielstation und Absicherung. Verlässt die Mitte nie.',
+     A6:'Pendelt in den ballnahen Halbraum und gibt dem IV eine zweite Option.',
+     LA:'Hält erst die Breite, startet dann diagonal in den Rücken der Abwehr, sobald die 10 aufdreht.',
+     ZM:'Lauert zwischen den Linien im ballnahen Halbraum und nimmt offen an.',
+     RA:'Bleibt breit und hoch, damit die gegnerische Kette nicht zusammenrückt.',
+     ST:'Hält die Innenverteidiger tief und läuft beim Aufdrehen der 10 auf den ersten Pfosten.'}},
+
+  {tab:'Angriff über rechts',intro:'Klassisches Dreieck auf rechts: RA zieht nach innen, der RV hinterläuft, die Box ist dreifach besetzt.',
+   frames:[
+    {t:'RA hat den Ball am Flügel',d:'Der RA bekommt den Ball in der Breite. RV ist hinter ihm, die 10 im Halbraum: Dreieck auf der rechten Seite.',
+     ball:'RA',opp:'def',us:{RA:[58,66],TW:[34,14],LIV:[24,40],RIV:[44,40],LV:[12,50],RV:[56,54],S6:[32,48],A6:[42,56],LA:[14,72],ZM:[42,68],ST:[34,80]}},
+    {t:'RA zieht nach innen, RV hinterläuft',d:'Das Dribbling nach innen zieht den gegnerischen Außenverteidiger mit. Genau in diesen frei gewordenen Raum hinterläuft der RV.',
+     ball:'RA',opp:'def',us:{RA:[52,72],RV:[63,70],ZM:[44,76],A6:[44,60],LIV:[25,44],RIV:[45,46],LV:[12,54],S6:[34,52],LA:[16,76],ST:[36,84],TW:[34,17]}},
+    {t:'Pass in den Lauf des RV',d:'Die Box wird besetzt: ST erster Pfosten, LA zweiter Pfosten, die 10 im Rückraum. Der Achter-Sechser sichert vor dem Strafraum ab.',
+     ball:'RV',opp:'def',us:{RV:[64,86],RA:[54,80],ST:[38,92],LA:[24,90],ZM:[38,82],A6:[42,66],S6:[34,54],LV:[14,58],LIV:[26,48],RIV:[46,52],TW:[34,20]}},
+    {t:'Flacher, scharfer Ball in die Box',d:'Scharf und flach zwischen Torwart und Abwehr ist besser als hoch. Wer im Strafraum ist, läuft in Räume, nicht zum Ball.',
+     ball:'ST',opp:'def',us:{ST:[40,97],LA:[26,95],ZM:[36,86],LIV:[26,52],RIV:[46,56],LV:[16,62],RV:[63,89],S6:[34,58],A6:[42,72],RA:[54,85],TW:[34,23]}}
+   ],
+   tasks:{TW:'Steht hoch hinter der Abwehr und fängt lange Bälle ab, falls wir den Ball verlieren.',
+     LIV:'Restverteidigung: rückt bis zur Mittellinie auf und hält Abstand zum gegnerischen Stürmer.',
+     RIV:'Rückt ballnah mit, bleibt aber hinter dem Ball. Wird der RV überspielt, schiebt er raus.',
+     LV:'Ballfern eingerückt, bildet mit beiden IV eine Dreierkette gegen Konter.',
+     RV:'Hinterläuft mit Tempo, sobald der RA nach innen zieht. Flankt früh und flach.',
+     S6:'Zentral vor den IV. Fängt zweite Bälle und Konterpässe ab.',
+     A6:'Besetzt den Raum vor dem Strafraum, verteilt um oder schießt bei Abprallern.',
+     LA:'Läuft spät auf den zweiten Pfosten. Zu früh heißt gedeckt oder im Abseits.',
+     ZM:'Bietet sich im Halbraum an und geht dann in den Rückraum für den Rückpass.',
+     RA:'Dribbelt nach innen, zieht seinen Gegenspieler mit und spielt den RV in den Lauf.',
+     ST:'Startet auf den ersten Pfosten und zieht so den Innenverteidiger vom zweiten Pfosten weg.'}},
+
+  {tab:'Hohes Pressing',intro:'Beim kurzen Abstoß des Gegners stellen wir im 4-4-2 hoch und lenken den Ball in die Falle an der Seitenlinie.',
+   frames:[
+    {t:'Gegner spielt den Abstoß kurz',d:'ST und 10 stehen vorne, die Flügel eingerückt auf Höhe der gegnerischen Innenverteidiger. Die Abwehr rückt bis zur Mittellinie nach.',
+     ball:[34,100],opp:'att',us:{TW:[34,30],LIV:[26,50],RIV:[42,50],LV:[8,58],RV:[60,58],S6:[28,66],A6:[42,68],LA:[18,84],ZM:[34,82],RA:[50,84],ST:[34,88]}},
+    {t:'Pass auf den IV: Pressingauslöser',d:'Der ST läuft im Bogen an und nimmt den Rückpass zum Torwart weg. Der RA lauert und lenkt den IV Richtung Seitenlinie.',
+     ball:[43,92],opp:'att',us:{ST:[39,95],RA:[52,88],ZM:[36,86],A6:[45,78],S6:[32,72],RV:[60,66],LA:[22,84],LV:[12,62],LIV:[28,56],RIV:[42,56],TW:[34,34]}},
+    {t:'Ball zum Außenverteidiger: Falle zu',d:'Die Seitenlinie ist unser zwölfter Mann. Der RA presst von innen, der RV schiebt auf den Flügel, der Achter-Sechser nimmt den Pass nach innen weg.',
+     ball:[61,90],opp:'att',us:{RA:[57,91],RV:[60,80],A6:[50,84],ZM:[42,88],ST:[47,93],S6:[36,76],LA:[26,82],RIV:[46,62],LIV:[32,58],LV:[18,64],TW:[34,38]}},
+    {t:'Ballgewinn: direkt aufs Tor',d:'Nach Ballgewinn hoch vorne sind es oft nur zwei Pässe bis zum Tor. Kein Querpass zurück, sondern direkt in die Box.',
+     ball:'ST',opp:'prev',us:{RA:[58,89],ST:[44,96],ZM:[38,90],LV:[14,66],LIV:[30,62],RIV:[46,66],RV:[58,84],S6:[38,80],A6:[50,88],LA:[30,88],TW:[34,42]}}
+   ],
+   tasks:{TW:'Steht bis zu 30 Meter vor dem Tor und läuft lange Bälle hinter die Kette ab.',
+     LIV:'Rückt mit auf und verengt den Raum zur Mitte.',
+     RIV:'Verfolgt den gegnerischen Stürmer, wenn er entgegenkommt. Kein Aufdrehen erlauben.',
+     LV:'Ballfern eingerückt auf Höhe der IV, sichert den Raum hinter dem Pressing ab.',
+     RV:'Springt auf den gegnerischen Flügel, sobald der Ball zum Außenverteidiger geht.',
+     S6:'Hält die Mitte zu, schiebt ballnah mit und fängt hohe Befreiungsschläge ab.',
+     A6:'Rückt auf den gegnerischen Achter durch und nimmt den Pass ins Zentrum weg.',
+     LA:'Steht eingerückt und hält den ballfernen Sechser im Deckungsschatten.',
+     ZM:'Deckt den gegnerischen Sechser, damit kein Ball durchs Zentrum geht.',
+     RA:'Lauert, bis der Ball zum Außenverteidiger rollt, und presst dann von innen nach außen.',
+     ST:'Läuft im Bogen an, schneidet den Rückpass zum Torwart ab und lenkt den Aufbau auf eine Seite.'}},
+
+  {tab:'Mittelblock',intro:'Der Gegner hat den Ball im Mittelfeld. Wir stehen im 4-4-1-1 und verschieben als Block mit dem Ball.',
+   frames:[
+    {t:'Kompakter Block in der Mitte',d:'Zwischen Abwehr und Mittelfeld höchstens 10–12 Meter. Die 10 schiebt auf den Sechser des Gegners, der ST lenkt.',
+     ball:[34,70],opp:'att',us:{ST:[40,60],ZM:[28,58],LA:[12,46],S6:[27,44],A6:[41,44],RA:[56,46],LV:[12,30],LIV:[27,28],RIV:[41,28],RV:[56,30],TW:[34,8]}},
+    {t:'Ball auf die Seite: alles verschiebt',d:'Ballnah presst der LA, der LV sichert dahinter. Ballfern rückt der RA bis in den Halbraum ein. Die ballferne Außenbahn bleibt frei, das ist gewollt.',
+     ball:[12,58],opp:'att',us:{LA:[10,52],S6:[20,46],A6:[32,45],RA:[44,46],LV:[10,34],LIV:[22,30],RIV:[34,29],RV:[46,31],ZM:[22,58],ST:[34,60],TW:[30,9]}},
+    {t:'Flügel bekommt den Ball: Doppeln',d:'Der LV stellt den Gegenspieler, der LA läuft von hinten rein: zwei gegen einen. Der Anker-Sechser schließt den Pass nach innen.',
+     ball:[8,44],opp:'att',us:{LV:[9,40],LA:[13,48],S6:[20,42],LIV:[20,32],RIV:[31,30],RV:[42,30],A6:[30,46],RA:[42,48],ZM:[20,56],ST:[32,58],TW:[28,10]}},
+    {t:'Seitenwechsel: zurückschieben',d:'Während der Ball in der Luft ist, verschiebt der ganze Block. Die Abstände bleiben gleich, nur die Seite wechselt.',
+     ball:[58,62],opp:'att',us:{LA:[24,46],S6:[34,45],A6:[46,46],RA:[58,52],LV:[22,31],LIV:[34,29],RIV:[46,30],RV:[58,34],ZM:[34,58],ST:[46,60],TW:[38,9]}}
+   ],
+   tasks:{TW:'Coacht die Kette laut, verschiebt mit dem Ball und ist bereit für Steilpässe.',
+     LIV:'Hält die Linie mit dem Partner, nie zwei Meter dahinter. Schiebt ballnah raus, wenn der LV Hilfe braucht.',
+     RIV:'Rückt ballnah ein, Abstand zum LIV höchstens 10 Meter.',
+     LV:'Stellt den Flügel zur Linie, nicht nach innen. Wartet aufs Doppeln statt zu grätschen.',
+     RV:'Ballfern eingerückt bis fast zum Strafraumeck. Die Mitte ist wichtiger als die Außenlinie.',
+     S6:'Schließt den Raum vor den IV, schiebt ballnah mit und nimmt Pässe ins Zentrum weg.',
+     A6:'Bleibt auf einer Linie mit dem Anker-Sechser, höchstens 10 Meter Abstand.',
+     LA:'Läuft den Flügel von innen an und doppelt mit dem LV.',
+     ZM:'Steht neben dem Stürmer auf dem gegnerischen Sechser, damit kein Pass durchs Zentrum geht.',
+     RA:'Ballfern bis in den Halbraum einrücken. Beim Seitenwechsel als Erster rausschieben.',
+     ST:'Lenkt den Aufbau auf eine Seite und läuft im Deckungsschatten an, nicht blind.'}},
+
+  {tab:'Gegenpressing',intro:'Ballverlust im Angriff: Die Nächsten attackieren sofort. Nach etwa 5 Sekunden ohne Ballgewinn fallen wir in den Block zurück.',
+   frames:[
+    {t:'Wir greifen an, die 10 hat den Ball',d:'Schon im Angriff stehen vier Spieler in der Restverteidigung: beide IV, der Anker-Sechser und der ballferne AV.',
+     ball:'ZM',opp:'def',us:{ZM:[42,72],ST:[36,84],LA:[16,80],RA:[58,80],A6:[44,62],S6:[32,56],LV:[12,52],RV:[58,66],LIV:[26,46],RIV:[42,46],TW:[34,18]}},
+    {t:'Ballverlust: sofort draufgehen',d:'Die drei nächsten Spieler attackieren den Ballführer. Nicht zurücklaufen, sondern nach vorne verteidigen.',
+     ball:[44,74],opp:'prev',snap:true,us:{ZM:[45,77],ST:[42,80],A6:[46,68],RA:[54,78],LA:[24,78],S6:[36,60],LIV:[28,49],RIV:[42,49],RV:[58,68],LV:[14,54],TW:[34,21]}},
+    {t:'Gegner spielt quer: Sechser springt',d:'Der Anker-Sechser springt auf den Passempfänger. Die IV rücken nach, damit hinter ihm kein Loch entsteht.',
+     ball:[34,68],opp:'prev',snap:true,us:{S6:[34,64],ZM:[38,72],A6:[40,66],ST:[36,74],LA:[28,74],LIV:[28,50],RIV:[40,50],RV:[56,60],LV:[14,52],TW:[34,24],RA:[48,74]}},
+    {t:'Ball zurück: schnell abschließen',d:'Direkt nach dem Ballgewinn ist der Gegner unsortiert. Jetzt sofort in die Tiefe spielen.',
+     ball:'ST',opp:'prev',us:{ST:[36,84],LA:[24,88],RA:[52,86],ZM:[40,76],LIV:[28,56],RIV:[42,56],LV:[14,60],RV:[58,72],S6:[36,70],A6:[44,74],TW:[34,28]}}
+   ],
+   tasks:{TW:'Steht hoch, coacht die Restverteidigung und fängt Befreiungsschläge ab.',
+     LIV:'Restverteidigung: bleibt auf Höhe des gegnerischen Stürmers und rückt beim Gegenpressing nach.',
+     RIV:'Restverteidigung: deckt den Raum hinter dem Sechser ab.',
+     LV:'Ballfern eher tief, bildet mit den IV die Absicherung gegen lange Bälle.',
+     RV:'Ballnah hoch, macht den Raum an der Linie zu, damit der Gegner nicht nach außen entkommt.',
+     S6:'Springt auf den ersten Querpass im Zentrum. Das ist sein Moment.',
+     A6:'Gehört zu den drei Nächsten am Ball und attackiert sofort.',
+     LA:'Rückt ins Zentrum ein und macht den Raum eng.',
+     ZM:'Hat den Ball verloren und presst als Erster nach. Keine Diskussion.',
+     RA:'Läuft von außen an und nimmt den Pass auf die Seite weg.',
+     ST:'Presst von vorne nach hinten und nimmt den Rückpass weg. Nach Ballgewinn sofort in die Tiefe.'}}
+  ]
+},
+'352':{
+  title:'3-5-2',
+  tag:'Drei Innenverteidiger, zwei flexible Außenbahnen, ein zentrales Dreieck und zwei Spitzen.',
+  shapes:[
+    {lab:'Grundordnung',f:'3-5-2',sub:'Ein 6er, zwei 8er'},
+    {lab:'Defensiv',f:'5-3-2',sub:'Doppelsechs, 10er davor',chains:[['LS','LHV','ZIV','RHV','RS'],['L8','R8','S6'],['LST','RST']],
+     pos:{TW:[34,7],LS:[6,24],LHV:[19,22],ZIV:[34,21],RHV:[49,22],RS:[62,24],L8:[27,31],S6:[41,31],R8:[34,38],LST:[27,50],RST:[41,50]}},
+    {lab:'Pendelnde Kette',f:'4-4-2',sub:'Angriff über links',chains:[['LHV','ZIV','RHV','RS'],['LS','L8','S6'],['LST','RST']],
+     pos:{TW:[29,7],LHV:[12,25],ZIV:[24,24],RHV:[36,24],RS:[48,25],LS:[8,44],L8:[20,34],S6:[31,33],R8:[26,41],LST:[16,54],RST:[30,54]}},
+    {lab:'Offensiv',f:'3-1-4-2',sub:'Schienen hoch, TW antizipiert',chains:[['LHV','ZIV','RHV'],['LS','L8','R8','RS'],['LST','RST']],
+     pos:{TW:[34,28],LHV:[14,49],ZIV:[34,48],RHV:[53,49],S6:[34,60],L8:[24,70],R8:[44,72],LS:[5,75],RS:[62,76],LST:[21,87],RST:[47,90]}},
+    {lab:'Abstoß kurz',f:'TW + 2',sub:'IV spielt kurz zum TW',chains:[['LHV','TW','RHV'],['LS','ZIV','RS'],['L8','R8'],['LST','RST']],
+     pos:{TW:[34,6],LHV:[20,13],RHV:[48,12],ZIV:[34,29],LS:[5,34],RS:[63,34],S6:[34,45],L8:[22,58],R8:[46,58],LST:[20,75],RST:[45,75]}},
+    {lab:'Abstoß lang',f:'Seite stark',sub:'Zielspieler verlängert',chains:[['LHV','ZIV','RHV'],['L8','S6','R8'],['LST','RST']],
+     pos:{TW:[34,8],LHV:[15,37],ZIV:[34,34],RHV:[50,40],LS:[4,59],RS:[63,59],S6:[28,48],L8:[24,62],R8:[42,58],LST:[18,66],RST:[37,74]}}],
+  principles:[
+    'Drei Innenverteidiger sichern das Zentrum, die zwei Außenbahnen sichern defensiv ab und schaffen offensiv Überzahl auf den Flügeln.',
+    'Mit Ball spielen wir mit einem 6er und zwei 8ern. Gegen den Ball rückt der linke 8er neben den 6er zur Doppelsechs, der rechte 8er spielt davor den 10er.',
+    'Gegen den Ball stehen wir kompakt im 5-3-2 mit engen Abständen zwischen den Ketten. Kommt der Gegner über außen, pendelt die Kette: ballnahe Schiene raus, ballferne rein.'],
+  order:['TW','LHV','ZIV','RHV','LS','S6','L8','R8','RS','LST','RST'],
+  chains:[['LHV','ZIV','RHV'],['L8','S6','R8'],['LST','RST']],
+  base:{TW:[34,10],LHV:[16,30],ZIV:[34,30],RHV:[52,30],LS:[6,48],RS:[62,48],S6:[34,42],L8:[23,55],R8:[45,55],LST:[24,72],RST:[44,72]},
+  pos:{
+    TW:{label:'TW',name:'Torwart',desc:'Mitspielender Torwart: aktiv im flachen Aufbau, antizipiert tiefe Bälle.',
+      mit:['Bekommt beim kurzen Abstoß den Ball vom IV und eröffnet flach','Bildet im Aufbau mit LHV und RHV die Kette','Beim langen Abstoß: gezielt auf den Zielspieler oder einen Stürmer'],
+      gegen:['Hohes Stellungsspiel, auch außerhalb des Strafraums','Lautstarkes Coaching, steuert die Defensivorganisation'],
+      um:['Ballgewinn: schnell auf den Stürmer oder die Schiene','Ballverlust: tiefe Bälle antizipieren']},
+    LHV:{label:'LHV',name:'Linker Innenverteidiger',desc:'Linker Teil der Dreierkette, oft der freie Mann.',
+      mit:['Steht im Aufbau tief und breit neben dem Torwart','Eröffnet über flache Pässe oder gezielte lange Bälle'],
+      gegen:['Verschiebt kompakt im Verbund zur Ballseite','Rückt ballnah raus, um Passwege zuzustellen','Zweikampf- und kopfballstark, klare Kommunikation'],
+      um:['Ballgewinn: darf andribbeln','Ballverlust: sofort zurück in die Kette']},
+    ZIV:{label:'ZIV',name:'Zentraler Innenverteidiger',desc:'Chef der Kette. Im Aufbau der tiefe Sechser vor dem Torwart.',
+      mit:['Rückt im Aufbau vor den Strafraum auf die Sechserposition','Bekommt den Ball, wenn frei, und spielt sofort auf die freie Seite raus'],
+      gegen:['Gibt Linie und Abstände vor','Kopfballhoheit und klare Kommunikation im Zentrum'],
+      um:['Ballgewinn: ruhig bleiben, den freien Mann suchen','Ballverlust: organisiert die Absicherung']},
+    RHV:{label:'RHV',name:'Rechter Innenverteidiger',desc:'Rechter Teil der Dreierkette, oft der freie Mann.',
+      mit:['Steht im Aufbau tief und breit neben dem Torwart','Eröffnet über flache Pässe oder gezielte lange Bälle'],
+      gegen:['Verschiebt kompakt im Verbund zur Ballseite','Rückt ballnah raus, um Passwege zuzustellen','Zweikampf- und kopfballstark, klare Kommunikation'],
+      um:['Ballgewinn: darf andribbeln','Ballverlust: sofort zurück in die Kette']},
+    LS:{label:'LS',name:'Linker Außenverteidiger',desc:'Schienenspieler: konstante Breite und hohes Laufpensum.',
+      mit:['Hält konstant die Breite, im Aufbau so breit wie möglich','Unter- und Überläufe, um Überzahl zu schaffen','Klare Entscheidung bei Flanken und Hereingaben'],
+      gegen:['Ballnah: schiebt raus auf den Ballführer und macht Druck','Ballfern: kippt in die pendelnde Viererkette ein'],
+      um:['Ballgewinn: sprintet die Linie hoch','Ballverlust: schnelles Rückwärtspressing, dann einrücken']},
+    RS:{label:'RS',name:'Rechter Außenverteidiger',desc:'Schienenspieler: konstante Breite und hohes Laufpensum.',
+      mit:['Hält konstant die Breite, im Aufbau so breit wie möglich','Unter- und Überläufe, um Überzahl zu schaffen','Klare Entscheidung bei Flanken und Hereingaben'],
+      gegen:['Ballnah: schiebt raus auf den Ballführer und macht Druck','Ballfern: kippt in die pendelnde Viererkette ein'],
+      um:['Ballgewinn: sprintet die Linie hoch','Ballverlust: schnelles Rückwärtspressing, dann einrücken']},
+    S6:{label:'6',name:'Sechser',desc:'Absicherung vor der Kette. Mit Ball der tiefe 6er, gegen den Ball Teil der Doppelsechs.',
+      mit:['Jederzeit anspielbar vor der Kette, verlagert das Spiel','Bestimmt das Spieltempo','Positionsdisziplin: bleibt als Restabsicherung hinter dem Ball'],
+      gegen:['Bildet mit dem linken 8er die Doppelsechs','Steht tief vor der Kette und hält den Raum zwischen den Ketten klein','Aktive Zweikampfführung'],
+      um:['Ballgewinn: Umschaltmoment sofort einleiten','Ballverlust: Restabsicherung vor der Kette']},
+    L8:{label:'8',name:'Linker Achter',desc:'Mit Ball Achter im linken Halbraum, gegen den Ball zweiter 6er.',
+      mit:['Anspielstation im linken Halbraum zwischen den Linien','Kombiniert mit Schiene und Stürmer, kommt für den steilen Ball entgegen','Abschluss- und Passgefahr aus dem Halbraum'],
+      gegen:['Rückt neben den 6er: Doppelsechs','Steht tief und schiebt ballnah mit'],
+      um:['Ballgewinn: erster Pass nach vorne','Ballverlust: sofort zurück neben den 6er']},
+    R8:{label:'8',name:'Rechter Achter',desc:'Mit Ball Achter im rechten Halbraum, gegen den Ball der 10er vor der Doppelsechs.',
+      mit:['Anspielstation im rechten Halbraum zwischen den Linien','Läuft in den Kanal und schafft Überzahl mit der Schiene','Abschluss- und Passgefahr aus dem Halbraum'],
+      gegen:['Spielt den 10er: fällt zwischen die zwei 6er, leicht davor','Unterstützt das Pressing situativ von vorne'],
+      um:['Ballgewinn: dritter Mann im Konter','Ballverlust: presst sofort nach']},
+    LST:{label:'LST',name:'Linker Stürmer',desc:'Eine der zwei Spitzen: Tiefe und Anspielstation.',
+      mit:['Konsequente Tiefenläufe, bindet die Abwehr','Ballbehauptung, Ablagen, schnelles Kombinationsspiel','Konsequent im Abschluss, Nachrücken im Strafraum'],
+      gegen:['Pressingauslöser in der ersten Linie','Verschiebt nebeneinander mit dem Partner'],
+      um:['Ballgewinn: sofort Tiefe','Ballverlust: Rückpass zum Torwart zustellen']},
+    RST:{label:'RST',name:'Rechter Stürmer',desc:'Eine der zwei Spitzen, beim langen Abstoß der Zielspieler.',
+      mit:['Kommt entgegen, macht den Ball fest, legt ab','Beim langen Abstoß: verlängert per Kopf','Konsequent im Abschluss, Nachrücken im Strafraum'],
+      gegen:['Pressingauslöser in der ersten Linie','Verschiebt nebeneinander mit dem Partner'],
+      um:['Ballgewinn: Anspielstation für den ersten Pass','Ballverlust: erster Pressingspieler']}
+  },
+  scen:[
+  {tab:'Abstoß kurz',intro:'Ein IV spielt den Abstoß kurz zum Torwart. Der Torwart bildet mit den Halbverteidigern die Aufbaukette, der ZIV rückt auf die Sechs. Erst geht der Ball auf die Schiene, dann, wenn frei, ins Zentrum zum ZIV, der wieder rausspielt.',
+   frames:[
+    {t:'Abstoß: IV spielt kurz zum Torwart',d:'Der RHV führt den Abstoß aus und spielt kontrolliert zum Torwart. Die Stürmer stehen so hoch wie möglich, die Schienen so breit wie möglich.',
+     ball:'RHV',opp:'def',us:{TW:[34,9],LHV:[20,12],RHV:[41,5],ZIV:[34,30],LS:[5,32],RS:[63,32],L8:[22,57],R8:[46,57],S6:[34,44],LST:[19,76],RST:[46,76]}},
+    {t:'Torwart in der Kette, ZIV rückt vor',d:'LHV und RHV stehen tief und breit, der Torwart zentral zwischen ihnen. Der ZIV steht vor dem Strafraum auf der Sechs.',
+     ball:'TW',opp:'def',us:{TW:[34,6],RHV:[48,12],S6:[34,45],L8:[22,58],R8:[46,58],LHV:[20,13],ZIV:[34,29],LS:[5,34],RS:[63,34],LST:[20,75],RST:[45,75]}},
+    {t:'Pass auf den rechten Halbverteidiger',d:'Die zwei Stürmer des Gegners können nicht drei Spieler pressen. Der RHV ist frei und dreht sich Richtung Schiene.',
+     ball:'RHV',opp:'def',us:{RHV:[50,15],RS:[63,38],R8:[49,54],ZIV:[36,29],TW:[32,7],LHV:[20,14],S6:[36,44],RST:[48,76],LST:[24,76],LS:[6,36],L8:[25,60]}},
+    {t:'Erst auf die Schiene',d:'Der RHV spielt den RS an der Linie an. Der Gegner verschiebt zur Ballseite. Der rechte 8er zieht seinen Gegenspieler weg, dadurch öffnet sich das Zentrum für den ZIV.',
+     ball:'RS',opp:'def',us:{RS:[63,42],RHV:[50,20],R8:[52,62],RST:[54,74],ZIV:[38,30],S6:[38,46],L8:[28,62],LS:[6,40],LHV:[20,16],TW:[34,9],LST:[28,76]}},
+    {t:'Wenn frei: rein ins Zentrum zum ZIV',d:'Ist der ZIV frei, spielt der RS zurück ins Zentrum. Der ZIV nimmt offen an, Blick auf die ballferne Seite. Ist er zugestellt, geht der Ball über RHV oder den 6er weiter.',
+     ball:'ZIV',opp:'def',us:{ZIV:[36,32],RS:[63,46],LS:[5,48],L8:[24,62],S6:[34,48],R8:[48,60],RHV:[50,22],LHV:[20,20],TW:[34,10],RST:[50,76],LST:[26,77]}},
+    {t:'ZIV spielt wieder raus',d:'Der Gegner steht noch auf der rechten Seite. Der ZIV verlagert sofort auf den LS, der auf der freien Seite viel Platz hat.',
+     ball:'LS',opp:'def',us:{LS:[5,52],L8:[26,64],LST:[24,78],S6:[30,50],ZIV:[32,35],LHV:[18,26],RHV:[46,26],TW:[32,12],RS:[62,54],R8:[42,58],RST:[44,78]}},
+    {t:'Steil auf den entgegenkommenden 8er',d:'Der linke 8er kommt aus dem Rücken der Gegenspieler entgegen und bekommt den steilen Ball. Der LST startet gleichzeitig in die Tiefe.',
+     ball:'L8',opp:'def',us:{S6:[28,54],LST:[28,84],RST:[42,86],LS:[6,62],L8:[22,68],R8:[40,62],RS:[60,64],ZIV:[34,40],LHV:[20,34],RHV:[46,36],TW:[34,16]}},
+    {t:'Steckpass, Box besetzen',d:'Der linke 8er steckt durch auf den LST. RST und RS gehen in den Strafraum, der rechte 8er rückt in den Rückraum. Der 6er bleibt als Restabsicherung, Kette und Torwart rücken nach.',
+     ball:'LST',opp:'def',us:{LST:[30,92],RST:[42,90],RS:[56,86],S6:[30,62],LS:[8,74],L8:[26,80],R8:[40,70],ZIV:[34,46],LHV:[20,42],RHV:[46,44],TW:[34,22]}}
+   ],
+   tasks:{TW:'Bekommt den Ball vom IV und eröffnet flach: über die Halbverteidiger oder direkt auf den ZIV. Ruhig bleiben.',
+     LHV:'Steht tief und breit neben dem Torwart. Rückt ballfern ein und schiebt nach der Verlagerung mit nach.',
+     ZIV:'Rückt auf die Sechs. Wird nach dem Pass auf die Schiene frei angespielt und spielt sofort auf die freie Seite raus.',
+     RHV:'Führt den Abstoß kurz zum Torwart aus, nimmt dann neben ihm an und spielt den RS.',
+     LS:'So breit wie möglich. Wartet ballfern auf die Verlagerung, dann hat er Platz und Zeit.',
+     RS:'So breit wie möglich. Erster Adressat im Aufbau, lockt den Gegner und spielt, wenn frei, zurück zum ZIV.',
+     L8:'Lauert im linken Halbraum, kommt nach der Verlagerung entgegen, nimmt den steilen Ball und steckt durch.',
+     R8:'Zieht seinen Gegenspieler aus dem Zentrum weg, damit die Passlinie zum ZIV frei wird. Danach in den Rückraum.',
+     S6:'Bleibt zentral vor der Kette als Anspielstation und Restabsicherung.',
+     LST:'Steht so hoch wie möglich, bindet die Abwehr und startet auf den Steckpass des linken 8ers.',
+     RST:'Steht so hoch wie möglich, bindet die Innenverteidiger und geht in den Strafraum.'}},
+
+  {tab:'Abstoß lang',intro:'Beim langen Abstoß machen wir eine Seite stark. Der Torwart schlägt den Ball auf den Zielspieler, der verlängert. Stürmer und ballnahe Schiene erlaufen den Ball, das Mittelfeld sichert zweite Bälle.',
+   frames:[
+    {t:'Seite stark machen',d:'LST, linker 8er und 6er machen die linke Seite stark. Beide Schienen sind hoch, der ballferne RS macht das Spiel breit. Der RST ist der Zielspieler.',
+     ball:'TW',opp:'def',oppAt:[34,52],us:{TW:[34,8],LHV:[15,37],ZIV:[34,34],RHV:[50,40],LS:[4,59],RS:[63,59],L8:[24,62],R8:[42,58],S6:[28,48],LST:[18,66],RST:[37,74]}},
+    {t:'Langer Ball auf den Zielspieler',d:'Der Torwart schlägt den Ball gezielt auf den RST. LST und LS starten schon in den Raum hinter der Abwehr. Die Kette rückt nach.',
+     ball:'RST',opp:'def',oppAt:[34,56],us:{RST:[36,77],LST:[22,75],LS:[7,68],S6:[28,54],L8:[26,69],R8:[42,62],ZIV:[34,40],LHV:[16,42],RHV:[48,43],RS:[62,62],TW:[34,12]}},
+    {t:'Verlängerung in den Lauf',d:'Der RST verlängert per Kopf in den Lauf des LST. Der LS hinterläuft, der linke 8er rückt als Anspielstation nach.',
+     ball:'LST',opp:'chase',us:{LST:[20,88],LS:[8,82],S6:[30,62],RST:[38,84],L8:[30,77],R8:[40,68],ZIV:[34,46],LHV:[18,48],RHV:[46,48],RS:[60,72],TW:[34,16]}},
+    {t:'Abschluss, Mittelfeld sichert zweite Bälle',d:'Der LST legt quer auf den nachgerückten RST. 6er und rechter 8er stehen kompakt gestaffelt für zweite Bälle und gehen bei Ballverlust sofort ins Gegenpressing.',
+     ball:'RST',opp:'chase',us:{RST:[38,93],S6:[30,68],RS:[56,88],LS:[10,90],LST:[22,92],L8:[30,85],R8:[42,74],ZIV:[34,52],LHV:[20,54],RHV:[46,54],TW:[34,20]}}
+   ],
+   tasks:{TW:'Schlägt den Ball gezielt auf den Zielspieler. Zweite Variante: direkt auf einen der Stürmer.',
+     LHV:'Rückt nach dem Abstoß sofort nach, damit der Abstand zum Mittelfeld klein bleibt.',
+     ZIV:'Organisiert das Nachrücken der Kette und sichert gegen den Konter ab.',
+     RHV:'Rückt mit auf und bleibt hinter dem Ball, falls der Gegner den Kopfball gewinnt.',
+     LS:'Ballnahe Schiene: steht hoch und startet in den Raum hinter der Abwehr, um die Verlängerung zu erlaufen.',
+     RS:'Ballferne Schiene: macht das Spiel breit und kommt am zweiten Pfosten.',
+     L8:'Steht auf der starken Seite nah am Zielspieler für Ablagen und zweite Bälle.',
+     R8:'Steht kompakt hinter dem Ball, sichert zweite Bälle und geht bei Ballverlust ins Gegenpressing.',
+     S6:'Macht die linke Seite mit stark und sichert zweite Bälle ab.',
+     LST:'Startet auf die Verlängerung in die Tiefe.',
+     RST:'Zielspieler: verlängert den Ball per Kopf in den Lauf von LST und LS, rückt dann in die Box nach.'}},
+
+  {tab:'Angriff über links',intro:'Wir überladen die linke Seite mit Schiene, linkem 8er und Stürmer. Der 6er sichert ab, der ballferne Schienenspieler kommt am zweiten Pfosten.',
+   frames:[
+    {t:'LS hat den Ball auf links',d:'Ball auf die Schiene, linker 8er und Stürmer kommen dazu: Dreieck auf der Seite. Der 6er sichert dahinter ab.',
+     ball:'LS',opp:'def',us:{LS:[8,64],S6:[30,52],L8:[24,66],R8:[42,62],LST:[24,80],RST:[38,82],RS:[60,70],LHV:[16,42],ZIV:[32,36],RHV:[48,40],TW:[34,14]}},
+    {t:'Doppelpass mit dem 8er',d:'Der LS spielt in den Fuß des linken 8ers und startet sofort an der Linie. Der LHV rückt nach, der 6er sichert hinter dem Ball ab.',
+     ball:'L8',opp:'def',us:{S6:[30,56],LS:[6,78],LHV:[14,52],LST:[22,86],ZIV:[32,40],RHV:[46,44],L8:[22,70],R8:[40,68],RS:[58,74],RST:[38,84],TW:[34,17]}},
+    {t:'Ball an die Grundlinie',d:'Box-Besetzung: LST erster Pfosten, RST Elfmeterpunkt, RS zweiter Pfosten. Der linke 8er lauert im Rückraum, der rechte 8er dahinter.',
+     ball:'LS',opp:'def',us:{LS:[6,88],LST:[30,97],RST:[40,93],RS:[54,92],S6:[30,64],L8:[36,84],R8:[44,76],LHV:[16,58],ZIV:[32,46],RHV:[44,48],TW:[34,20]}},
+    {t:'Flach zurück in den Rückraum',d:'Der LS legt flach zurück auf den linken 8er im Rückraum. Das ist die gefährlichste Hereingabe. Der 6er bleibt als Restabsicherung.',
+     ball:'L8',opp:'def',us:{S6:[30,68],RST:[42,94],LST:[32,99],LS:[8,95],RS:[54,95],L8:[36,85],R8:[44,80],ZIV:[32,50],LHV:[18,62],RHV:[44,52],TW:[34,23]}}
+   ],
+   tasks:{TW:'Steht hoch und antizipiert lange Bälle nach Ballverlust.',
+     LHV:'Rückt hinter dem LS nach und deckt den Flügel bei Ballverlust ab.',
+     ZIV:'Bleibt zentral und hält Kontakt zum gegnerischen Stürmer.',
+     RHV:'Rückt ein Stück ein und bildet mit dem ZIV die Absicherung.',
+     LS:'Spielen und gehen: nach dem Pass sofort in den freien Raum an der Linie (Überlaufen).',
+     RS:'Kommt ballfern in den Strafraum am zweiten Pfosten. Der Überraschungsspieler.',
+     L8:'Prallwand für den LS, danach in den Rückraum für Rückpass und Abschluss.',
+     R8:'Rückt in den rechten Rückraum für Abpraller nach.',
+     S6:'Restabsicherung vor der Kette. Fängt den ersten Konterpass ab.',
+     LST:'Kommt kurz zum Ball oder geht auf den ersten Pfosten.',
+     RST:'Hält sich im Zentrum und läuft im letzten Moment in die Lücke am Elfmeterpunkt.'}},
+
+  {tab:'Hohes Pressing',intro:'Die Stürmer stellen die Innenverteidiger zu, der rechte 8er unterstützt als 10er von vorne. Der Ball soll auf die Außenbahn, dort springt die Schiene.',
+   frames:[
+    {t:'Gegner baut auf: wir stellen zu',d:'Die Stürmer stehen bei den Innenverteidigern, der rechte 8er als 10er auf dem gegnerischen Sechser, die Doppelsechs dahinter in den Halbräumen. Die Schienen lauern.',
+     ball:[34,100],opp:'att',us:{LST:[28,88],RST:[40,88],S6:[44,72],L8:[24,72],R8:[34,82],LS:[10,70],RS:[58,70],LHV:[22,54],ZIV:[34,50],RHV:[46,54],TW:[34,26]}},
+    {t:'Pass auf den IV: Stürmer läuft an',d:'Die Stürmer sind die Pressingauslöser. Der LST läuft so an, dass der Pass zurück in die Mitte zu ist. Der Ball soll auf die Außenbahn.',
+     ball:[25,92],opp:'att',us:{LST:[28,93],RST:[34,89],S6:[40,74],L8:[22,80],LS:[10,80],R8:[32,84],RS:[54,72],LHV:[20,62],ZIV:[32,58],RHV:[44,58],TW:[34,30]}},
+    {t:'Ball zum Außenverteidiger: Schiene springt',d:'Jetzt springt der LS auf den Außenverteidiger, der LHV übernimmt den Flügel. Die ballferne Schiene kippt ein: hinten entsteht eine Viererkette.',
+     ball:[6,92],opp:'att',us:{LS:[9,88],L8:[16,86],LST:[18,94],S6:[36,78],RST:[30,90],R8:[28,84],LHV:[14,72],ZIV:[28,64],RHV:[40,64],RS:[50,68],TW:[32,32]}},
+    {t:'Ballgewinn hoch vorne',d:'Zwei Stürmer sind nah am Tor. Der schnellste Weg ist der direkte Pass in den Strafraum.',
+     ball:'LST',opp:'prev',us:{LS:[10,89],LST:[24,95],RST:[34,94],S6:[38,82],L8:[20,90],R8:[30,88],LHV:[16,76],ZIV:[30,68],RHV:[40,68],RS:[52,76],TW:[32,38]}}
+   ],
+   tasks:{TW:'Spielt mit, steht hoch und antizipiert Bälle hinter die aufgerückte Kette.',
+     LHV:'Rückt aggressiv auf den gegnerischen Flügel, wenn der LS rausschiebt.',
+     ZIV:'Hält die Mitte und verschiebt ballnah. Aus drei werden vier hinten.',
+     RHV:'Ballfern eingerückt, wird zum rechten Innenverteidiger der Viererkette.',
+     LS:'Springt auf den Außenverteidiger, sobald der Ball unterwegs ist. Nicht vorher.',
+     RS:'Ballfern zurück in die Kette und schließt die Lücke rechts.',
+     L8:'Doppelsechs links: schiebt ballnah raus auf den gegnerischen Achter.',
+     R8:'Spielt den 10er: deckt den gegnerischen Sechser und nimmt den Pass ins Zentrum weg.',
+     S6:'Doppelsechs rechts: rückt zur Mitte ein und sichert ab.',
+     LST:'Pressingauslöser: läuft von innen nach außen an und lenkt das Spiel auf die Außenbahn.',
+     RST:'Stellt den Deckungsschatten auf den Sechser und presst den Rückpass.'}},
+
+  {tab:'Verteidigen',intro:'Defensiv stehen wir kompakt im 5-3-2 mit Doppelsechs. Kommt der Gegner über außen, pendelt die Kette: Die ballnahe Schiene schiebt raus, die ballferne kippt ein. Mit den drei IV steht hinten immer eine Viererkette.',
+   frames:[
+    {t:'Defensive Grundordnung: 5-3-2',d:'Die Schienen fallen zurück, der linke 8er rückt neben den 6er: Doppelsechs. Der rechte 8er fällt als 10er zwischen die beiden. Abwehr und Mittelfeld stehen eng, die Stürmer verschieben nebeneinander.',
+     ball:[34,64],opp:'att',us:{TW:[34,7],LHV:[19,22],ZIV:[34,21],RHV:[49,22],LS:[6,24],RS:[62,24],L8:[27,31],S6:[41,31],R8:[34,38],LST:[27,50],RST:[41,50]}},
+    {t:'Ball auf links: LS schiebt raus, RS kippt ein',d:'Der LS läuft den Ballführer an. Gleichzeitig kippt der RS in die letzte Reihe: LHV, ZIV, RHV und RS bilden eine Viererkette. Die Doppelsechs schiebt mit, der 10er stellt den Pass ins Zentrum zu.',
+     ball:[7,56],opp:'att',us:{LS:[8,44],L8:[20,34],S6:[31,33],R8:[26,41],LHV:[12,25],ZIV:[24,24],RHV:[36,24],RS:[48,25],LST:[16,54],RST:[30,54],TW:[29,7]}},
+    {t:'Seitenwechsel: die Kette pendelt',d:'Bei einem Angriff über rechts läuft derselbe Ablauf andersherum: Der RS schiebt raus, der LS kippt in die Kette, die drei IV verschieben nach rechts.',
+     ball:[61,56],opp:'att',us:{RS:[60,44],LS:[20,25],LHV:[32,24],ZIV:[44,24],RHV:[55,25],L8:[36,33],S6:[47,34],R8:[44,41],LST:[38,54],RST:[52,54],TW:[39,7]}},
+    {t:'Flügel überspielt: ein 6er lässt sich fallen',d:'Der Gegner spielt hinter den RS. Der RHV schiebt raus, der RS doppelt von hinten. Der 6er lässt sich fallen und schließt den Raum zwischen den Ketten.',
+     ball:[62,36],opp:'att',us:{RHV:[59,30],RS:[60,38],ZIV:[46,23],LHV:[34,23],LS:[22,24],L8:[38,32],S6:[48,29],R8:[52,38],LST:[40,50],RST:[50,52],TW:[42,7]}}
+   ],
+   tasks:{TW:'Kommandiert die Kette lautstark und verschiebt mit dem Ball. Bei Flanken klar ansagen: raus oder bleiben.',
+     LHV:'Verschiebt kompakt im Verbund. Ist der Ball links, sichert er hinter dem LS ab, ist er rechts, rückt er Richtung Mitte.',
+     ZIV:'Hält die Kette zusammen und gibt die Abstände vor. Verschiebt mit, bleibt aber im Zentrum vor dem Tor.',
+     RHV:'Sichert hinter dem RS ab. Wird der RS überspielt, rückt er ballnah raus.',
+     LS:'Fällt situativ zurück. Ballnah schiebt er raus und macht Druck, ballfern kippt er in die Kette.',
+     RS:'Ballfern kippt er in die Kette. Beim Seitenwechsel schiebt er raus, wird er überspielt, doppelt er von hinten.',
+     L8:'Zweiter 6er: steht tief neben dem 6er und schiebt ballnah mit.',
+     R8:'Spielt den 10er: fällt zwischen die zwei 6er, leicht davor, und stört den Sechser des Gegners.',
+     S6:'Doppelsechs: steht tief vor der Kette. Wird der Raum zwischen den Ketten zu groß, lässt er sich fallen.',
+     LST:'Verschiebt nebeneinander mit dem RST und lenkt das Spiel auf eine Seite.',
+     RST:'Verschiebt nebeneinander mit dem LST und bleibt für den Konter anspielbar.'}},
+
+  {tab:'Konter',intro:'Ballgewinn tief in der eigenen Hälfte. Mit zwei Spitzen und dem rechten 8er kontern wir in Überzahl, die Doppelsechs sichert ab.',
+   frames:[
+    {t:'Ballgewinn durch die Doppelsechs',d:'Der linke 8er erobert als zweiter 6er den Ball. Der Gegner ist mit vielen Spielern aufgerückt. Jetzt zählt der erste Pass nach vorne.',
+     ball:'L8',opp:'att',oppAt:[40,44],snap:false,us:{LS:[10,26],LHV:[22,22],ZIV:[34,20],RHV:[46,22],RS:[58,28],L8:[30,33],R8:[36,42],S6:[42,32],LST:[28,54],RST:[42,56],TW:[34,6]}},
+    {t:'Erster Pass: zum Stürmer, der entgegenkommt',d:'Der RST kommt entgegen, behauptet den Ball und legt ab oder dreht auf. Der LST startet sofort in die Tiefe.',
+     ball:'RST',opp:'chase',us:{RST:[44,60],LST:[30,66],S6:[42,42],RS:[62,40],L8:[32,38],R8:[46,52],LHV:[22,25],ZIV:[34,24],RHV:[46,26],LS:[8,32],TW:[34,8]}},
+    {t:'Steckpass auf den tiefen Stürmer',d:'Ein Stürmer bindet, einer läuft. Der rechte 8er und der ballnahe Schienenspieler sprinten mit, die Doppelsechs sichert ab.',
+     ball:'LST',opp:'chase',us:{LST:[32,80],RST:[44,72],S6:[40,50],RS:[62,58],L8:[28,50],R8:[50,66],LS:[10,44],LHV:[22,31],ZIV:[34,29],RHV:[46,33],TW:[34,10]}},
+    {t:'Überzahl im Strafraum ausspielen',d:'Lieber einmal quer zum freien Mitspieler als aus spitzem Winkel schießen. Hinten bleiben drei IV und die Doppelsechs zur Absicherung.',
+     ball:'RST',opp:'chase',us:{RST:[46,90],LST:[34,94],S6:[40,58],RS:[60,76],L8:[28,60],R8:[52,80],LHV:[22,42],ZIV:[34,40],RHV:[46,44],LS:[12,58],TW:[34,15]}}
+   ],
+   tasks:{TW:'Antizipiert und bleibt hoch. Hat er den Ball: schneller Abwurf auf den freien Stürmer.',
+     LHV:'Bleibt als Absicherung gegen den Gegenkonter hinten.',
+     ZIV:'Organisiert die Absicherung: drei bleiben immer hinten.',
+     RHV:'Rückt bis zur Mittellinie nach, bleibt aber hinter dem Ball.',
+     LS:'Ballfern: sprintet nach vorne, sobald der Konter läuft, und stellt Breite her.',
+     RS:'Ballnah: sprintet an der Linie mit und bietet die Breite an.',
+     L8:'Erobert als zweiter 6er den Ball und spielt sofort vertikal auf den Stürmer. Danach Absicherung neben dem 6er.',
+     R8:'Sprintet mit in den Halbraum, der dritte Mann im Konter.',
+     S6:'Bleibt mit dem linken 8er hinter dem Ball als Absicherung.',
+     LST:'Startet sofort in die Tiefe, sobald der Ball gewonnen ist.',
+     RST:'Kommt entgegen, behauptet den Ball, legt ab oder dreht auf.'}}
+  ]
+}};
+
+const QUIZ=[
+ {tag:'3-5-2 · Abstoß kurz',q:'Kurzer Abstoß: Wohin geht der erste Pass?',o:['Lang auf den Stürmer','Ein IV spielt kurz zum Torwart','Direkt auf die Schiene'],a:1,w:'Ein IV spielt den Abstoß kontrolliert zum Torwart. Der eröffnet dann flach über die Halbverteidiger, den ZIV oder die Schienen.'},
+ {tag:'3-5-2 · Defensiv',q:'Gegen den Ball: Wie steht unser Mittelfeld im 3-5-2?',o:['Ein 6er und zwei 8er','Doppelsechs, der rechte 8er als 10er davor','Alle drei auf einer Linie neben den Stürmern'],a:1,w:'Gegen den Ball rückt der linke 8er neben den 6er. Der rechte 8er spielt den 10er und fällt zwischen die beiden 6er, leicht davor.'},
+ {tag:'4-2-3-1 · Aufbau',q:'Abstoß, wir bauen flach auf. Wo stehen die Innenverteidiger?',o:['Eng zusammen am Elfmeterpunkt','Breit an den Strafraumecken','Direkt an der Mittellinie'],a:1,w:'Breit an den Strafraumecken ziehen die gegnerischen Stürmer auseinander. So ist meist einer von beiden frei.'},
+ {tag:'4-2-3-1 · Pressing',q:'Was ist im hohen Pressing der Auslöser für unseren Flügelspieler?',o:['Der Abstoß des Torwarts','Der Pass vom Innenverteidiger zum Außenverteidiger','Jeder Rückpass'],a:1,w:'Erst wenn der Ball zum Außenverteidiger rollt, presst der Flügel von innen nach außen. Dann ist die Seitenlinie unser zwölfter Mann.'},
+ {tag:'Gegenpressing',q:'Ballverlust im Angriff. Wer attackiert sofort?',o:['Alle elf','Nur der Spieler, der den Ball verloren hat','Die drei nächsten Spieler'],a:2,w:'Die drei Nächsten attackieren, der Rest sichert ab. Sonst steht hinten niemand mehr.'},
+ {tag:'Gegenpressing',q:'Wie lange pressen wir nach Ballverlust, bevor wir uns in den Block zurückziehen?',o:['Etwa 5 Sekunden','Etwa 20 Sekunden','Bis wir den Ball haben'],a:0,w:'Nach etwa 5 Sekunden ohne Ballgewinn hat sich der Gegner befreit. Dann zurück in die Grundordnung.'},
+ {tag:'4-2-3-1 · Mittelblock',q:'Der Ball ist auf der linken Seite. Was macht der rechte Außenverteidiger?',o:['Bleibt an der rechten Seitenlinie','Rückt bis zum Strafraumeck ein','Schiebt hoch auf die Mittellinie'],a:1,w:'Ballfern rückt die Kette ein. Die Mitte ist wichtiger als die leere Außenbahn.'},
+ {tag:'Kompaktheit',q:'Wie groß ist der Abstand zwischen Abwehr und Mittelfeld im Block höchstens?',o:['10–12 Meter','20–25 Meter','Das ist egal'],a:0,w:'Mehr als 10–12 Meter öffnen den Raum zwischen den Linien, genau dort will der Gegner hin.'},
+ {tag:'3-5-2 · gegen den Ball',q:'Ball auf der linken Seite. Was machen unsere Schienenspieler?',o:['Beide fallen in eine Fünferkette zurück','Der LS schiebt raus, der RS kippt in die Kette: pendelnde Viererkette','Beide bleiben auf Höhe des Mittelfelds'],a:1,w:'Die ballnahe Schiene macht Druck auf den Ballführer, die ballferne kippt ein. Mit den drei IV steht so hinten immer eine Viererkette, die mit dem Ball pendelt.'},
+ {tag:'3-5-2 · mit Ball',q:'Wer gibt im 3-5-2 im Angriff die Breite?',o:['Die Stürmer','Die Halbverteidiger','Die Schienenspieler'],a:2,w:'Die Schienenspieler sind allein für die Breite zuständig, deshalb ist es die laufintensivste Position.'},
+ {tag:'3-5-2 · Angriff',q:'Flanke von links. Wohin läuft der rechte Schienenspieler?',o:['An den zweiten Pfosten','Bleibt an der Mittellinie','An den ersten Pfosten'],a:0,w:'Der ballferne Schienenspieler ist am zweiten Pfosten oft völlig frei. Er ist der Überraschungsspieler.'}
+];
+
+/* ---------- Gegner-Formen ---------- */
+function defShape(b){
+  const [bx,by]=b, DL=clamp(by+22,55,93), ML=DL-13, FL=ML-14, s=clamp((bx-34)*0.45,-14,14);
+  const X=x=>clamp(x+s,2,66);
+  return [[34+s*0.15,101],[X(27),DL],[X(41),DL],[X(12),DL-1],[X(56),DL-1],[X(27),ML],[X(41),ML],[X(12),ML+1],[X(56),ML+1],[X(29),FL],[X(39),FL]];
+}
+function attShape(b,low){
+  const [bx,by]=b, R=clamp(by,25,92), s=clamp((bx-34)*0.3,-10,10);
+  const X=x=>clamp(x+s,2,66), Y=y=>clamp(Math.max(y,low+3),4,100);
+  return [[34,101],[X(25),Y(Math.min(R+12,94))],[X(43),Y(Math.min(R+12,94))],[X(8),Y(R+2)],[X(60),Y(R+2)],[X(34),Y(R-2)],[X(24),Y(R-12)],[X(44),Y(R-12)],[X(8),Y(R-28)],[X(60),Y(R-28)],[X(34),Y(R-32)]];
+}
+function resolve(sys,sc){
+  const cur={}; for(const k in sys.base) cur[k]=sys.base[k].slice();
+  let prev=null; const out=[];
+  for(const f of sc.frames){
+    if(f.us) for(const k in f.us) cur[k]=f.us[k].slice();
+    const us={}; for(const k in cur) us[k]=cur[k].slice();
+    const ball=typeof f.ball==='string'?us[f.ball].slice():f.ball.slice();
+    const low=Math.min(...Object.keys(us).filter(k=>k!=='TW').map(k=>us[k][1]));
+    const mode=f.opp||'def'; let opp;
+    if(mode==='def') opp=defShape(f.oppAt||ball);
+    else if(mode==='att') opp=attShape(f.oppAt||ball,low);
+    else if(mode==='chase'){const d=defShape(ball); opp=prev.map((p,i)=>[p[0]+(d[i][0]-p[0])*.5,p[1]+(d[i][1]-p[1])*.5]);}
+    else opp=prev.map(p=>p.slice());
+    const snap=f.snap!==undefined?f.snap:mode==='att';
+    if(snap){let bi=0,bd=1e9;opp.forEach((p,i)=>{const d=Math.hypot(p[0]-ball[0],p[1]-ball[1]);if(d<bd){bd=d;bi=i}});opp[bi]=ball.slice();}
+    out.push({us,opp,ball:[ball[0]+1.5,ball[1]+1.7],t:f.t,d:f.d}); prev=opp;
+  }
+  return out;
+}
+
+/* ---------- SVG ---------- */
+function E(tag,attrs,parent){const e=document.createElementNS(NS,tag);if(attrs)for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;}
+function buildPitch(svg,px){
+  svg.setAttribute('viewBox','-3 -4 74 113');
+  let s=`<defs>
+   <marker id="${px}-r" viewBox="0 0 6 6" refX="4" refY="3" markerWidth="4" markerHeight="4" orient="auto"><path d="M0 0L6 3L0 6z" class="mk-run"/></marker>
+   <marker id="${px}-f" viewBox="0 0 6 6" refX="4" refY="3" markerWidth="3.4" markerHeight="3.4" orient="auto"><path d="M0 0L6 3L0 6z" class="mk-f"/></marker>
+   <marker id="${px}-p" viewBox="0 0 6 6" refX="4" refY="3" markerWidth="3.6" markerHeight="3.6" orient="auto"><path d="M0 0L6 3L0 6z" class="mk-pass"/></marker></defs>`;
+  for(let i=0;i<10;i++) s+=`<rect x="0" y="${i*10.5}" width="68" height="10.5" class="${i%2?'st-a':'st-b'}"/>`;
+  s+=`<g class="lines"><rect x="0" y="0" width="68" height="105"/><line x1="0" y1="52.5" x2="68" y2="52.5"/><circle cx="34" cy="52.5" r="9.15"/>
+   <rect x="13.84" y="0" width="40.32" height="16.5"/><rect x="24.84" y="0" width="18.32" height="5.5"/>
+   <rect x="13.84" y="88.5" width="40.32" height="16.5"/><rect x="24.84" y="99.5" width="18.32" height="5.5"/>
+   <rect x="30.34" y="-2" width="7.32" height="2"/><rect x="30.34" y="105" width="7.32" height="2"/>
+   <path d="M26.69 16.5A9.15 9.15 0 0 0 41.31 16.5"/><path d="M26.69 88.5A9.15 9.15 0 0 1 41.31 88.5"/></g>
+   <circle cx="34" cy="52.5" r=".45" class="spot"/><circle cx="34" cy="11" r=".4" class="spot"/><circle cx="34" cy="94" r=".4" class="spot"/>
+   <text x="66.6" y="3.2" class="dir" text-anchor="end">ANGRIFF ↑</text>
+   <g class="chains"></g><g class="arrows"></g><g class="opps"></g><g class="us"></g><g class="ballg"><circle r="1.05" class="ball"/></g>`;
+  svg.innerHTML=s;
+  return {svg,px,chains:svg.querySelector('.chains'),arrows:svg.querySelector('.arrows'),opps:svg.querySelector('.opps'),
+    us:svg.querySelector('.us'),ball:svg.querySelector('.ballg'),p:{},o:[]};
+}
+function place(g,p){g.setAttribute('transform',`translate(${p[0].toFixed(2)} ${(H-p[1]).toFixed(2)})`);}
+function addPlayers(B,sys,onPick){
+  B.us.innerHTML='';B.p={};
+  for(const id of sys.order){
+    const P=sys.pos[id];
+    const g=E('g',{class:'pl'+(id==='TW'?' gk':''),'data-id':id,tabindex:'0',role:'button','aria-label':P.name},B.us);
+    E('circle',{class:'ring',r:3.8},g);E('circle',{class:'body',r:2.4},g);
+    const t=E('text',{class:'lbl','font-size':P.label.length>2?1.32:1.8,'text-anchor':'middle','dominant-baseline':'central'},g);t.textContent=P.label;
+    g.addEventListener('click',()=>onPick(id));
+    g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();onPick(id);}});
+    B.p[id]=g;
+  }
+}
+function addOpps(B,n){B.opps.innerHTML='';B.o=[];for(let i=0;i<n;i++){const g=E('g',{class:'op'+(i===0?' gk':'')},B.opps);E('circle',{r:2.1},g);B.o.push(g);}}
+function setSel(B,id){B.svg.classList.toggle('has-focus',!!id);for(const k in B.p)B.p[k].classList.toggle('sel',k===id);}
+
+/* ---------- Zustand ---------- */
+let sysKey='4231';
+try{const v=localStorage.getItem('tt-sys');if(v&&SYS[v])sysKey=v;}catch(e){}
+const $=id=>document.getElementById(id);
+const hero=buildPitch($('heroSvg'),'h');
+const anim=buildPitch($('animSvg'),'a');
+let heroSel='ZM', focus=null, scIdx=0, frames=[], idx=0, phase='hold', playing=false, stopAfter=false, t0=0, speed=1;
+const MOVE=reduce?1:1700, HOLD=2300;
+
+function esc(s){return s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+function discHtml(id,P){return `<span class="disc${id==='TW'?' gk':''}" aria-hidden="true">${esc(P.label)}</span>`;}
+
+/* Grundordnung */
+function renderHero(){
+  const S=SYS[sysKey];
+  $('sysTitle').textContent=S.title;$('sysTag').textContent=S.tag;
+  $('shapes').className='shapes'+(S.shapes.length>4?' six':'');
+  $('shapes').innerHTML=S.shapes.map((s,i)=>`<button type="button" class="shape" id="shape-${i}" aria-pressed="${i===0}"><small>${esc(s.lab)}</small><b>${esc(s.f)}</b><span>${esc(s.sub)}</span></button>`).join('');
+  S.shapes.forEach((s,i)=>$('shape-'+i).addEventListener('click',()=>showShape(i)));
+  $('principles').innerHTML=S.principles.map(p=>`<li>${esc(p)}</li>`).join('');
+  addPlayers(hero,S,id=>{heroSel=id;renderRole();});
+  addOpps(hero,0);
+  heroAnim++;heroPos={};for(const id in S.base)heroPos[id]=S.base[id].slice();
+  heroChains=S.chains;drawHero();
+  hero.ball.style.display='none';
+  if(!S.pos[heroSel]) heroSel=S.order.includes('ZM')?'ZM':'S6';
+  renderRole();
+}
+let heroPos={},heroChains=[],heroAnim=0;
+function drawHero(){
+  for(const id in heroPos) place(hero.p[id],heroPos[id]);
+  hero.chains.innerHTML='';
+  for(const ch of heroChains) for(let i=0;i<ch.length-1;i++){const a=heroPos[ch[i]],b=heroPos[ch[i+1]];E('line',{x1:a[0].toFixed(2),y1:(H-a[1]).toFixed(2),x2:b[0].toFixed(2),y2:(H-b[1]).toFixed(2)},hero.chains);}
+}
+function showShape(i){
+  const S=SYS[sysKey],sh=S.shapes[i];
+  document.querySelectorAll('#shapes .shape').forEach((b,j)=>b.setAttribute('aria-pressed',j===i));
+  const target=sh.pos||S.base, from={};for(const id in heroPos)from[id]=heroPos[id].slice();
+  heroChains=sh.chains||S.chains;
+  const id0=++heroAnim, t0=performance.now(), D=reduce?1:750;
+  (function step(now){
+    if(id0!==heroAnim)return;
+    const e=Math.min(1,(now-t0)/D), k=e<.5?2*e*e:1-Math.pow(-2*e+2,2)/2;
+    for(const id in from)heroPos[id]=[from[id][0]+(target[id][0]-from[id][0])*k,from[id][1]+(target[id][1]-from[id][1])*k];
+    drawHero(); if(e<1)requestAnimationFrame(step);
+  })(t0);
+}
+function renderRole(){
+  const S=SYS[sysKey],P=S.pos[heroSel];
+  setSel(hero,heroSel);hero.svg.classList.remove('has-focus');
+  const li=a=>a.map(x=>`<li>${esc(x)}</li>`).join('');
+  $('role').innerHTML=`<div class="role-head">${discHtml(heroSel,P)}<div><h3>${esc(P.name)}</h3><p>${esc(P.desc)}</p></div></div>
+   <div class="role-cols"><div><h4>Mit Ball</h4><ul>${li(P.mit)}</ul></div><div><h4>Gegen den Ball</h4><ul>${li(P.gegen)}</ul></div><div><h4>Umschalten</h4><ul>${li(P.um)}</ul></div></div>
+   <button class="link-btn" type="button" id="roleGo">In den Spielsituationen verfolgen →</button>`;
+  $('roleGo').addEventListener('click',()=>{setFocus(heroSel);$('situationen').scrollIntoView({behavior:reduce?'auto':'smooth'});});
+}
+
+/* Szenarien */
+function renderTabs(){
+  const S=SYS[sysKey];
+  $('tabs').innerHTML=S.scen.map((s,i)=>`<button class="tab" role="tab" type="button" id="tab-${i}" aria-selected="${i===scIdx}">${esc(s.tab)}</button>`).join('');
+  S.scen.forEach((s,i)=>$('tab-'+i).addEventListener('click',()=>{loadScen(i);play();}));
+}
+function loadScen(i){
+  const S=SYS[sysKey];scIdx=i;
+  document.querySelectorAll('#tabs .tab').forEach((b,j)=>b.setAttribute('aria-selected',j===i));
+  frames=resolve(S,S.scen[i]);
+  $('scenIntro').textContent=S.scen[i].intro;
+  $('phases').innerHTML=frames.map((f,j)=>`<li><button type="button" data-j="${j}"><span class="n">${j+1}</span><span>${esc(f.t)}</span></button></li>`).join('');
+  $('phases').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>goTo(+b.dataset.j)));
+  const T=S.scen[i].tasks;
+  $('tasks').innerHTML=S.order.map(id=>`<li><button type="button" data-id="${id}" aria-pressed="${id===focus}">${discHtml(id,S.pos[id])}<span><b>${esc(S.pos[id].name)}</b><span class="t">${esc(T[id])}</span></span></button></li>`).join('');
+  $('tasks').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>setFocus(b.dataset.id===focus?null:b.dataset.id)));
+  goTo(0);
+}
+function setFocus(id){
+  focus=id;setSel(anim,id);
+  $('tasks').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.id===id));
+  if(phase==='hold') drawArrows();
+}
+function renderAt(A,B,e){
+  for(const id in A.us){const a=A.us[id],b=B.us[id];place(anim.p[id],[a[0]+(b[0]-a[0])*e,a[1]+(b[1]-a[1])*e]);}
+  A.opp.forEach((a,i)=>{const b=B.opp[i];place(anim.o[i],[a[0]+(b[0]-a[0])*e,a[1]+(b[1]-a[1])*e]);});
+  place(anim.ball,[A.ball[0]+(B.ball[0]-A.ball[0])*e,A.ball[1]+(B.ball[1]-A.ball[1])*e]);
+}
+function line(a,b,cls,mk,s1,s2){
+  const d=Math.hypot(b[0]-a[0],b[1]-a[1]),ux=(b[0]-a[0])/d,uy=(b[1]-a[1])/d;
+  E('line',{x1:(a[0]+ux*s1).toFixed(2),y1:(H-(a[1]+uy*s1)).toFixed(2),x2:(b[0]-ux*s2).toFixed(2),y2:(H-(b[1]-uy*s2)).toFixed(2),class:cls,'marker-end':`url(#${mk})`},anim.arrows);
+}
+function drawArrows(){
+  anim.arrows.innerHTML='';
+  if(!$('showRuns').checked||idx>=frames.length-1) return;
+  const A=frames[idx],B=frames[idx+1];
+  for(const id in A.us){const a=A.us[id],b=B.us[id];if(Math.hypot(b[0]-a[0],b[1]-a[1])<3.5)continue;
+    if(focus&&id!==focus)continue;
+    line(a,b,'run'+(id===focus?' f':''),id===focus?'a-f':'a-r',2.8,2.9);}
+  if(Math.hypot(B.ball[0]-A.ball[0],B.ball[1]-A.ball[1])>3) line(A.ball,B.ball,'pass','a-p',1.3,1.6);
+}
+function caption(){
+  const f=frames[idx];
+  $('phCount').textContent=`Phase ${idx+1} von ${frames.length}`;$('phTitle').textContent=f.t;$('phText').textContent=f.d;
+  $('phases').querySelectorAll('button').forEach((b,j)=>{if(j===idx)b.setAttribute('aria-current','step');else b.removeAttribute('aria-current');});
+}
+function setPlayBtn(){
+  const b=$('btnPlay');
+  b.innerHTML=playing&&!stopAfter?'<svg viewBox="0 0 16 16"><path d="M3 2h4v12H3zM9 2h4v12H9z"/></svg><span>Pause</span>'
+    :(idx>=frames.length-1&&phase==='hold'?'<svg viewBox="0 0 16 16"><path d="M8 2a6 6 0 1 0 6 6h-2a4 4 0 1 1-4-4v3l4-4-4-4z"/></svg><span>Nochmal</span>':'<svg viewBox="0 0 16 16"><path d="M4 2l10 6-10 6z"/></svg><span>Abspielen</span>');
+}
+function goTo(i){
+  playing=false;stopAfter=false;idx=clamp(i,0,frames.length-1);phase='hold';
+  renderAt(frames[idx],frames[idx],0);caption();drawArrows();setPlayBtn();
+}
+function startMove(now){idx++;phase='move';t0=now;anim.arrows.innerHTML='';caption();}
+function play(){
+  if(idx>=frames.length-1){goTo(0);}
+  playing=true;stopAfter=false;phase='hold';t0=performance.now()-HOLD*0.55/speed;setPlayBtn();
+}
+function tick(now){
+  if(playing){
+    const el=(now-t0)*speed;
+    if(phase==='move'){
+      let e=Math.min(1,el/MOVE);const k=e<.5?2*e*e:1-Math.pow(-2*e+2,2)/2;
+      renderAt(frames[idx-1],frames[idx],k);
+      if(e>=1){phase='hold';t0=now;drawArrows();if(stopAfter){playing=false;stopAfter=false;}setPlayBtn();}
+    }else if(el>=HOLD){
+      if(idx<frames.length-1) startMove(now); else {playing=false;setPlayBtn();}
+    }
+  }
+  requestAnimationFrame(tick);
+}
+
+/* Steuerung */
+$('btnPlay').addEventListener('click',()=>{if(playing&&!stopAfter){playing=false;setPlayBtn();}else play();});
+$('btnNext').addEventListener('click',()=>{if(idx<frames.length-1){if(phase==='move'){renderAt(frames[idx],frames[idx],0);}playing=true;stopAfter=true;startMove(performance.now());setPlayBtn();}});
+$('btnPrev').addEventListener('click',()=>goTo(phase==='move'?idx-1:idx-1));
+$('btnRestart').addEventListener('click',()=>goTo(0));
+$('showRuns').addEventListener('change',()=>{if(phase==='hold')drawArrows();});
+$('speed').addEventListener('change',e=>{speed=+e.target.value;t0=performance.now();});
+
+function setSystem(k){
+  sysKey=k;try{localStorage.setItem('tt-sys',k);}catch(e){}
+  document.querySelectorAll('.seg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.sys===k));
+  focus=null;scIdx=0;
+  renderHero();
+  const S=SYS[k];addPlayers(anim,S,id=>setFocus(id===focus?null:id));addOpps(anim,11);setSel(anim,null);
+  renderTabs();loadScen(0);
+}
+document.querySelectorAll('.seg button').forEach(b=>b.addEventListener('click',()=>setSystem(b.dataset.sys)));
+
+/* Quiz */
+let answered={};
+function renderQuiz(){
+  answered={};
+  $('quizBox').innerHTML=QUIZ.map((q,i)=>`<div class="q"><span class="tag">${esc(q.tag)}</span><h3>${i+1}. ${esc(q.q)}</h3>
+    <div class="opts-q">${q.o.map((o,j)=>`<button class="opt" type="button" data-q="${i}" data-o="${j}">${esc(o)}</button>`).join('')}</div>
+    <p class="why" id="why-${i}" hidden></p></div>`).join('');
+  $('quizBox').querySelectorAll('.opt').forEach(b=>b.addEventListener('click',()=>{
+    const i=+b.dataset.q,j=+b.dataset.o,q=QUIZ[i];if(answered[i]!==undefined)return;answered[i]=j===q.a;
+    b.closest('.q').querySelectorAll('.opt').forEach((x,n)=>{x.disabled=true;if(n===q.a)x.classList.add('ok');else if(n===j)x.classList.add('no');});
+    const w=$('why-'+i);w.textContent=(j===q.a?'Richtig. ':'Nicht ganz. ')+q.w;w.hidden=false;updScore();
+  }));
+  updScore();
+}
+function updScore(){const n=Object.values(answered).filter(Boolean).length;$('scoreVal').textContent=`${n} / ${QUIZ.length}`;}
+$('quizReset').addEventListener('click',renderQuiz);
+
+/* Dehnen */
+const DEHN=[
+ {n:'Innerer Oberschenkel',r:'4× pro Seite',h:'',ar:[0.794,0.741,1.148]},
+ {n:'Hinterer Oberschenkel',r:'4× pro Seite',h:'',ar:[0.648,0.931,0.897]},
+ {n:'Adduktoren',r:'5× 3 Sek. halten',h:'Auch im Schneidersitz möglich.',ar:[0.648,1,0.651]},
+ {n:'Abduktoren / Gesäß',r:'4× pro Seite',h:'',ar:[0.648,0.898,0.648]},
+ {n:'Vorderer Oberschenkel',r:'4× pro Seite',h:'Kurz auf die Zehenspitzen, kurz halten.',ar:[0.649,0.868,0.646]},
+ {n:'Hüftbeuger',r:'2× pro Seite',h:'Hüfte in jeder Position 3× nach vorne schieben.',ar:[1.112,1.171,1.087]},
+ {n:'Gesäßmuskel',r:'3× pro Seite',h:'Knie anziehen, kurz auf die Zehenspitzen.',ar:[0.649,0.676,0.649]},
+ {n:'Wade',r:'3× pro Seite',h:'Ausfallschritt, mit wippender Bewegung 3× die Wade belasten.',ar:[0.649,0.9,0.649]}];
+const MOBIL=[
+ {n:'Hüftrotation im Sitzen',r:'5× pro Seite',h:'Oberkörper durchgehend gerade halten.',ar:[1.206,1.082,1.21]},
+ {n:'Becken vorschieben',r:'6 Wdh.',h:'Hüfte nach vorne schieben, mobilisiert das Becken.',ar:[1.252,1.306,1.221]},
+ {n:'Rotation der Wirbelsäule',r:'5× pro Seite',h:'Becken möglichst ruhig halten.',ar:[1.161,0.927,1.161]},
+ {n:'Hüfte aus dem Stütz',r:'3× pro Seite',h:'Abwechselnd, je 3× mit der Hüfte wippen.',ar:[1.157,1.198,1.157]}];
+const CAP=['Ausgang','Bewegung','Endposition'];
+function exHtml(e,i,off,mob){
+  return `<article class="ex"><div class="ex-head"><span class="ex-n${mob?' mob':''}" aria-hidden="true">${i+1}</span><div><h3>${esc(e.n)}</h3>${e.h?`<p class="hint">${esc(e.h)}</p>`:''}</div><span class="reps">${esc(e.r)}</span></div>
+   <div class="photos">${e.ar.map((r,k)=>`<figure style="flex:${r} 1 0"><img src="dehn/e${off+i+1}_${k}.jpg" alt="${esc(e.n)}: ${CAP[k]}" loading="lazy"><figcaption>${CAP[k]}</figcaption></figure>`).join('')}</div></article>`;
+}
+$('exStretch').innerHTML=DEHN.map((e,i)=>exHtml(e,i,0,false)).join('');
+$('exMobil').innerHTML=MOBIL.map((e,i)=>exHtml(e,i,8,true)).join('');
+function setView(v){
+  ['taktik','dehnen','spielerplus','strafen'].forEach(k=>{$('view-'+k).hidden=v!==k;});$('taktikTools').hidden=v!=='taktik';$('taktikNav').hidden=v!=='taktik';
+  document.querySelectorAll('.views button').forEach(b=>b.setAttribute('aria-selected',b.dataset.view===v));
+  try{localStorage.setItem('tt-view',v);}catch(e){}
+  window.scrollTo(0,0);
+}
+document.querySelectorAll('.views button').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
+let startView='taktik';
+try{const v=localStorage.getItem('tt-view');if(['dehnen','spielerplus','strafen'].includes(v))startView=v;}catch(e){}
+if(['#dehnen','#spielerplus','#strafen'].includes(location.hash))startView=location.hash.slice(1); else if(location.hash&&location.hash!=='#')startView='taktik';
+setSystem(sysKey);renderQuiz();requestAnimationFrame(tick);
+if(startView!=='taktik')setView(startView);
+})();
+</script>
+<div class="bleib" id="bleib" role="dialog" aria-modal="true" aria-labelledby="bleibTitle">
+  <div class="bleib-card">
+    <button type="button" class="bleib-x" id="bleibX" aria-label="Schließen">×</button>
+    <img src="logo.png" alt="Wappen SG DGF Janneby">
+    <small>SG DGF Janneby</small>
+    <h2 id="bleibTitle"><span>Stefan</span><span>bleib!</span></h2>
+    <button type="button" class="go" id="bleibGo">Weiter zur Taktiktafel</button>
+  </div>
+</div>
+<script>
+(function(){
+  const box=document.getElementById('bleib');
+  const close=()=>{box.hidden=true;};
+  document.getElementById('bleibGo').addEventListener('click',close);
+  document.getElementById('bleibX').addEventListener('click',close);
+  box.addEventListener('click',e=>{if(e.target===box)close();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!box.hidden)close();});
+  setTimeout(()=>{try{document.getElementById('bleibGo').focus({preventScroll:true});}catch(e){}},50);
+})();
+</script>
+<div class="install" id="installBar" hidden>
+  <img src="icon-192.png" alt="">
+  <p><b>Als App installieren</b><span id="installText">Für schnellen Zugriff auf dem Startbildschirm.</span></p>
+  <button type="button" id="installBtn" hidden>Installieren</button>
+  <button type="button" class="x" id="installClose" aria-label="Schließen">×</button>
+</div>
+<script>
+(function(){
+  if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
+  const bar=document.getElementById('installBar'),btn=document.getElementById('installBtn'),txt=document.getElementById('installText');
+  const standalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+  let dismissed=false;try{dismissed=localStorage.getItem('install-dismissed')==='1';}catch(e){}
+  if(standalone||dismissed)return;
+  const ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  let deferred=null;
+  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e;btn.hidden=false;bar.hidden=false;});
+  if(ios){txt.textContent='In Safari unten auf „Teilen“ tippen, dann „Zum Home-Bildschirm“.';bar.hidden=false;}
+  btn.addEventListener('click',async()=>{if(!deferred)return;deferred.prompt();await deferred.userChoice;deferred=null;bar.hidden=true;});
+  document.getElementById('installClose').addEventListener('click',()=>{bar.hidden=true;try{localStorage.setItem('install-dismissed','1');}catch(e){}});
+})();
+</script>
+</body>
+</html>
